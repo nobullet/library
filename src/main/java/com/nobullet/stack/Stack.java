@@ -3,7 +3,6 @@ package com.nobullet.stack;
 /**
  * Stack.
  *
- * @author nikuliak
  * @param <T> Data type.
  */
 public class Stack<T> {
@@ -22,10 +21,10 @@ public class Stack<T> {
     public void push(T newData) {
         size++;
         if (head == null) {
-            head = new Node(newData);
+            head = new Node<>(newData);
             return;
         }
-        Node<T> newNode = new Node(newData);
+        Node<T> newNode = new Node<>(newData);
         newNode.next = head;
         head = newNode;
     }

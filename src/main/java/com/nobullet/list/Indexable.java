@@ -1,4 +1,4 @@
-package com.nobullet.algo;
+package com.nobullet.list;
 
 import java.util.RandomAccess;
 

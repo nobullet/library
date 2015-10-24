@@ -1,5 +1,6 @@
 package com.nobullet.algo;
 
+import com.nobullet.list.Lists;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.BiFunction;
 
 /**
  * Knapsack problem and solutions.
@@ -113,7 +113,7 @@ public final class Knapsack {
      * @return Optimal solution of bounded Knapsack problem in the for of repeatable items.
      */
     public static List<RepeatableItem> bounded(int weight, Set<? extends RepeatableItem> items) {
-        return compact(genericWithIterable(weight, new RepeatableItemsIterable(items)), RepeatableItem::new);
+        return Lists.compact(genericWithIterable(weight, new RepeatableItemsIterable(items)), RepeatableItem::new);
     }
 
     /**
@@ -225,42 +225,6 @@ public final class Knapsack {
     }
 
     /**
-     * Groups duplicate elements in the given list, converting list element to something that accepts list element and
-     * quantity of this list element in group. Acts like simple RLE compression.
-     *
-     * @param <R> Return type: type that has information about quantity of original item.
-     * @param <P> Item type.
-     * @param list List of items.
-     * @param converter Converter to convert item and quantity to an entity that have both.
-     * @return Compacted list.
-     */
-    public static <R, P> List<R> compact(List<P> list, BiFunction<P, Integer, R> converter) {
-        int size = list.size();
-        List<R> repeatableResult = new ArrayList<>(size);
-        int quantity = 0;
-        P prev = null;
-        for (int i = 0; i < size; i++) {
-            quantity++;
-            P current = list.get(i);
-            if (!current.equals(prev)) {
-                if (prev != null) {
-                    repeatableResult.add(converter.apply(prev, quantity));
-                }
-                quantity = 0;
-                if (i + 1 == size) {
-                    repeatableResult.add(converter.apply(current, 1));
-                }
-            } else {
-                if (i + 1 == size) {
-                    repeatableResult.add(converter.apply(current, quantity));
-                }
-            }
-            prev = current;
-        }
-        return repeatableResult;
-    }
-
-    /**
      * Item in the Knapsack: value and weight.
      */
     public static class Item implements Comparable<Item> {
@@ -269,6 +233,13 @@ public final class Knapsack {
         final int weight;
         final String description;
 
+        /**
+         * Constructs item from given arguments.
+         *
+         * @param description Description.
+         * @param value Value.
+         * @param weight Weight.
+         */
         public Item(String description, int value, int weight) {
             if (value < 0 || weight < 0) {
                 throw new IllegalArgumentException("Value and weight must be >= 0.");
@@ -278,18 +249,39 @@ public final class Knapsack {
             this.description = description;
         }
 
+        /**
+         * Constructs item from given arguments.
+         *
+         * @param value Value.
+         * @param weight Weight.
+         */
         public Item(int value, int weight) {
             this(null, value, weight);
         }
 
+        /**
+         * Returns weight of the item.
+         *
+         * @return Item weight.
+         */
         public final int getWeight() {
             return weight;
         }
 
+        /**
+         * Item value.
+         *
+         * @return Item value.
+         */
         public final int getValue() {
             return value;
         }
 
+        /**
+         * Item description.
+         *
+         * @return Item description.
+         */
         public String getDescription() {
             return description;
         }
@@ -308,6 +300,13 @@ public final class Knapsack {
             return description.compareTo(o.description);
         }
 
+        /**
+         * Compares item to other item by value and weight only.
+         *
+         * @param o Other item
+         * @return the value {@code 0} if {@code x == y}; a value less than {@code 0} if {@code x < y}; and a value
+         * greater than {@code 0} if {@code x > y}
+         */
         final int compareByValueAndWeight(Item o) {
             // By value then by weight.
             if (value == o.value) {
@@ -345,6 +344,11 @@ public final class Knapsack {
             return toStringBuilder().toString();
         }
 
+        /**
+         * {@link StringBuilder} with string representation of the object.
+         *
+         * @return String representation of the object.
+         */
         StringBuilder toStringBuilder() {
             StringBuilder result = new StringBuilder("{value:")
                     .append(value)
@@ -368,14 +372,35 @@ public final class Knapsack {
         final Item item;
         final int quantity;
 
+        /**
+         * Constructs repeatable item from given arguments.
+         *
+         * @param description Description.
+         * @param value Value.
+         * @param weight Weight.
+         * @param quantity Quantity.
+         */
         public RepeatableItem(String description, int value, int weight, int quantity) {
             this(new Item(description, value, weight), quantity);
         }
 
+        /**
+         * Constructs repeatable item from given arguments.
+         *
+         * @param value Value.
+         * @param weight Weight.
+         * @param quantity Quantity.
+         */
         public RepeatableItem(int value, int weight, int quantity) {
             this(new Item(value, weight), quantity);
         }
 
+        /**
+         * Constructs repeatable item from given arguments.
+         *
+         * @param item Item.
+         * @param quantity Quantity.
+         */
         public RepeatableItem(Item item, int quantity) {
             if (quantity < 0) {
                 throw new IllegalArgumentException("Quantity must be > 0");
@@ -384,10 +409,20 @@ public final class Knapsack {
             this.quantity = quantity;
         }
 
+        /**
+         * Returns the item.
+         *
+         * @return Item.
+         */
         public final Item getItem() {
             return item;
         }
 
+        /**
+         * Quantity of the item.
+         *
+         * @return Quantity of the item.
+         */
         public final int getQuantity() {
             return quantity;
         }
@@ -420,6 +455,11 @@ public final class Knapsack {
             return toStringBuilder().toString();
         }
 
+        /**
+         * {@link StringBuilder} with string representation of the object.
+         *
+         * @return String representation of the object.
+         */
         StringBuilder toStringBuilder() {
             StringBuilder sb = item.toStringBuilder();
             sb.setCharAt(sb.length() - 1, ',');
@@ -435,10 +475,21 @@ public final class Knapsack {
         final Item item;
         final Double ratio;
 
+        /**
+         * Constructs ratio for greedy unbounded Knapsack solution.
+         *
+         * @param value Value.
+         * @param weight Weight.
+         */
         public Ratio(int value, int weight) {
             this(new Item(value, weight));
         }
 
+        /**
+         * Constructs ratio for greedy unbounded Knapsack solution.
+         *
+         * @param item Item.
+         */
         public Ratio(Item item) {
             this.item = item;
             this.ratio = (double) this.item.value / (double) this.item.weight;
@@ -451,12 +502,19 @@ public final class Knapsack {
     }
 
     /**
-     * {@link Iterable} that returns {@link RepeatableItemsToItemsIterator}.
+     * {@link Iterable} that returns {@link RepeatableItemsToItemsIterator}. {@link RepeatableItemsToItemsIterator} is
+     * {@link Iterator} that emits plain {@link Item} object from given set of {@link RepeatableItem}. Each {@link Item}
+     * is emitted 'quantity' times.
      */
     private static final class RepeatableItemsIterable implements Iterable<Item> {
 
         final Set<? extends RepeatableItem> repeatableItems;
 
+        /**
+         * Constructs iterable.
+         *
+         * @param repeatableItems
+         */
         public RepeatableItemsIterable(Set<? extends RepeatableItem> repeatableItems) {
             this.repeatableItems = repeatableItems;
         }
@@ -468,8 +526,8 @@ public final class Knapsack {
     }
 
     /**
-     * {@link Iterator} that emits plain {@link Item} object from given set of {@link RepeatableItem}. Used for solving
-     * bounded Knapsack problem.
+     * {@link Iterator} that emits plain {@link Item} object from given set of {@link RepeatableItem}. Each {@link Item}
+     * is emitted 'quantity' times. Used for solving bounded Knapsack problem.
      */
     private static final class RepeatableItemsToItemsIterator implements Iterator<Item> {
 
@@ -477,12 +535,20 @@ public final class Knapsack {
         RepeatableItem currentRepeatableItem;
         int currentCount;
 
+        /**
+         * Constructs repeatable iterator.
+         *
+         * @param repeatableItems Repeatable items to construct from.
+         */
         public RepeatableItemsToItemsIterator(Set<? extends RepeatableItem> repeatableItems) {
             this.repeatableItems = repeatableItems.iterator();
             fetchNextRepeatable();
         }
 
-        private void fetchNextRepeatable() {
+        /**
+         * Switches to the next {@link RepeatableItem} when iterator has already emitted previous item 'quantity' times.s
+         */
+        void fetchNextRepeatable() {
             if (repeatableItems.hasNext()) {
                 currentRepeatableItem = repeatableItems.next();
                 currentCount = currentRepeatableItem.quantity;
