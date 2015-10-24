@@ -65,7 +65,7 @@ public final class LongestCommonSubsequence {
     }
 
     /**
-     * Finds common subsequence of characters for given indexables.
+     * Finds common subsequence of elements for given indexables.
      *
      * @param <T> Type
      * @param source1 Indexable 1.
