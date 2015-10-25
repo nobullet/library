@@ -168,6 +168,14 @@ public class KnapsackTest {
                 result);
     }
 
+    @Test
+    public void testBounded_empty() {
+        List<RepeatableItem> result
+                = Knapsack.bounded(2,
+                        new int[]{3, 4, 5, 9, 9}, new int[]{1, 6, 6, 7, 6}, new int[]{1, 2, 1, 1, 1});
+        assertListsEqual(Lists.newArrayList(), result);
+    }
+
     /**
      * Builds a map from given arguments. Treats arguments as key, value, key, value...
      *

@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 /**
- * Tests for Greedy algorithms (BFS, Dijkstra).
+ * Tests for Greedy algorithms (BFS, Dijkstra) and A-Star.
  */
 public class MapPathsTest {
 

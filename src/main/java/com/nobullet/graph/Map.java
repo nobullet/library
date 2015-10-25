@@ -23,12 +23,11 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class Map {
 
-    protected static final BiFunction<Cell, Cell, Double> DIJKSTRA_HEURISTIC = (Cell next, Cell goal) -> 0.0D;
-    protected static final BiFunction<Cell, Cell, Double> A_STAR_HEURISTIC
-            = (Cell next, Cell goal) -> goal.distanceTo(next);
-    protected static final Map EMPTY_MAP = new Map(0, 0);
-    protected static final Cell NOWHERE = new Cell(-1, -1);
-    protected final long[][] matrix;
+    static final BiFunction<Cell, Cell, Double> DIJKSTRA_HEURISTIC = (Cell next, Cell goal) -> 0.0D;
+    static final BiFunction<Cell, Cell, Double> A_STAR_HEURISTIC = (Cell next, Cell goal) -> goal.distanceTo(next);
+    static final Map EMPTY_MAP = new Map(0, 0);
+    static final Cell NOWHERE = new Cell(-1, -1);
+    final long[][] matrix;
 
     /**
      * Constructs matrix.
@@ -215,7 +214,7 @@ public class Map {
      * Dijkstra.
      * @return Path from source cell to target cell.
      */
-    public Path shortestPathTemplate(Cell source, Cell target, BiFunction<Cell, Cell, Double> heuristic) {
+    public final Path shortestPathTemplate(Cell source, Cell target, BiFunction<Cell, Cell, Double> heuristic) {
         checkBounds(source);
         checkBounds(target);
 

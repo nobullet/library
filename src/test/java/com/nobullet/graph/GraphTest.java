@@ -12,8 +12,6 @@ import org.junit.Test;
 
 /**
  * Basic tests.
- *
- * @author nikuliak
  */
 public class GraphTest {
 

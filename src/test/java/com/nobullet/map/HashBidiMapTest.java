@@ -1,14 +1,11 @@
 package com.nobullet.map;
 
-import com.nobullet.map.HashBidiMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import org.junit.Test;
 
 /**
  * HashBidiMap tests.
- *
- * @author nikuliak
  */
 public class HashBidiMapTest {
 

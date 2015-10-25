@@ -9,8 +9,6 @@ import org.junit.Test;
 
 /**
  * Stack tests.
- *
- * @author nikuliak
  */
 public class StackTest {
 

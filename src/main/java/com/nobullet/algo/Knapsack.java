@@ -207,13 +207,14 @@ public final class Knapsack {
             //i++;
         }
         // Now find the optimal total weight for the optimal total value.
-        int optimalSolution = previousRow[weight];
-        while (previousRow[weight - 1] == optimalSolution) {
-            weight--;
+        vi = weight;
+        int optimalSolution = previousRow[vi];
+        while (vi > 0 && previousRow[vi - 1] == optimalSolution) {
+            vi--;
         }
         // Restore the solution.
         List<Item> solution = new ArrayList<>();
-        Item remaining = new Item(optimalSolution, weight);
+        Item remaining = new Item(optimalSolution, vi);
         while (cameFromItems.containsKey(remaining)) {
             Item solutionItem = cameFromItems.get(remaining);
             solution.add(solutionItem);
