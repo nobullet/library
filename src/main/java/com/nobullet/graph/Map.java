@@ -125,11 +125,11 @@ public class Map {
     }
 
     /**
-     * Finds shortest path with breadth-first search. Treats 0's as empty cells and other values as walls.
+     * Finds shortest path with breadth-first search. Treats given value to explore as cells and other values as walls.
      *
      * @param source Source cell.
      * @param target Target cell.
-     * @param exploreValue Value to explore. If null, 0's are explored.
+     * @param exploreValue Value to explore.
      * @param area Area (set) to fill with path when exploring graph.
      * @return Path from source cell to target cell.
      */
@@ -192,7 +192,7 @@ public class Map {
      * @return Path from source cell to target cell.
      */
     public Path shortestPathDijkstra(Cell source, Cell target) {
-        return shortestPathSkeleton(source, target, DIJKSTRA_HEURISTIC);
+        return shortestPathTemplate(source, target, DIJKSTRA_HEURISTIC);
     }
 
     /**
@@ -203,11 +203,11 @@ public class Map {
      * @return Path from source cell to target cell.
      */
     public Path shortestPathAStar(Cell source, Cell target) {
-        return shortestPathSkeleton(source, target, A_STAR_HEURISTIC);
+        return shortestPathTemplate(source, target, A_STAR_HEURISTIC);
     }
 
     /**
-     * Skeleton for A* and algorithm. Treats each cell as a price of getting into it.
+     * Template for A* and Dijkstra algorithm. Treats each cell as a price of getting into it.
      *
      * @param source Source cell.
      * @param target Target cell.
@@ -215,7 +215,7 @@ public class Map {
      * Dijkstra.
      * @return Path from source cell to target cell.
      */
-    public Path shortestPathSkeleton(Cell source, Cell target, BiFunction<Cell, Cell, Double> heuristic) {
+    public Path shortestPathTemplate(Cell source, Cell target, BiFunction<Cell, Cell, Double> heuristic) {
         checkBounds(source);
         checkBounds(target);
 
