@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 
 /**
- *
+ * Division.
  */
 public class Divide extends Operation {
 

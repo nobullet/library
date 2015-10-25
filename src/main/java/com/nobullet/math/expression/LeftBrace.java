@@ -1,7 +1,7 @@
 package com.nobullet.math.expression;
 
 /**
- *
+ * Left brace.
  */
 class LeftBrace implements ExpressionPart {
 

@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 
 /**
- *
+ * Multiplication.
  */
 public class Multiply extends Operation {
 

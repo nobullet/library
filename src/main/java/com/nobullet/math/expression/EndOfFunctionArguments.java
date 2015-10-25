@@ -1,7 +1,7 @@
 package com.nobullet.math.expression;
 
 /**
- *
+ * End of function arguments.
  */
 class EndOfFunctionArguments implements ExpressionPart {
 

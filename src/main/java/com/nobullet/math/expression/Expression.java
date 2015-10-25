@@ -8,7 +8,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 /**
- * Mathematical expression parser and evaluator. Supports standard functions () and variables.
+ * Mathematical expression parser and evaluator. Supports standard functions (+,-,*,/) and variables.
  */
 public class Expression {
 

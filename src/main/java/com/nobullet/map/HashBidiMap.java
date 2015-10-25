@@ -13,7 +13,7 @@ interface BidiMap<K, V> extends Map<K, V> {
 }
 
 /**
- * Hash bidi map. Not thread-safe.
+ * Hash bidirectional map. Not thread-safe.
  *
  * @param <K> Key type.
  * @param <V> Value type.
@@ -63,6 +63,7 @@ public class HashBidiMap<K, V> implements BidiMap<K, V> {
 
     @Override
     public V remove(Object key) {
+        @SuppressWarnings("unchecked")
         V toRemove = kvMap.get((K) key);
         if (toRemove != null) {
             kvMap.remove(key);

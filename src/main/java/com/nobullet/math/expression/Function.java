@@ -1,7 +1,7 @@
 package com.nobullet.math.expression;
 
 /**
- *
+ * Function.
  */
 public abstract class Function extends Operation {
 
@@ -23,5 +23,4 @@ public abstract class Function extends Operation {
     public boolean hasArithmeticSign() {
         return false;
     }
-
 }

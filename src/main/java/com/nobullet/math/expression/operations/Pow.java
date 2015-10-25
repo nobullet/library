@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 
 /**
- *
+ * Pow.
  */
 public class Pow extends Operation {
 

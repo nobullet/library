@@ -13,6 +13,7 @@ public class Variable implements ExpressionPart {
 
     /**
      * Returns variable name.
+     *
      * @return Variable name,
      */
     public String getName() {

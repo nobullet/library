@@ -2,7 +2,6 @@ package com.nobullet.list;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.nobullet.MoreAssertions.assertListsEqual;
-import com.nobullet.list.Lists;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

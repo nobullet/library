@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 
 /**
- *
+ * Subtraction.
  */
 public class Subtract extends Operation {
 
