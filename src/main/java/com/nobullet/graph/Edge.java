@@ -5,23 +5,23 @@ package com.nobullet.graph;
  */
 public class Edge {
 
-    private Vertex from;
-    private Vertex to;
-    private double weight;
-    private Object data;
+    Vertex from;
+    Vertex to;
+    double cost;
+    Object data;
 
     public Edge(Vertex from, Vertex to) {
         this(from, to, 1.0D, null);
     }
 
-    public Edge(Vertex from, Vertex to, double weight) {
-        this(from, to, weight, null);
+    public Edge(Vertex from, Vertex to, double cost) {
+        this(from, to, cost, null);
     }
 
-    public Edge(Vertex from, Vertex to, double weight, Object data) {
+    public Edge(Vertex from, Vertex to, double cost, Object data) {
         this.from = from;
         this.to = to;
-        this.weight = weight;
+        this.cost = cost;
         this.data = data;
     }
 
@@ -41,12 +41,12 @@ public class Edge {
         this.to = to;
     }
 
-    public double getWeight() {
-        return weight;
+    public double getCost() {
+        return cost;
     }
 
-    public void setWeight(double weight) {
-        this.weight = weight;
+    public void setCost(double weight) {
+        this.cost = weight;
     }
 
     public Object getData() {

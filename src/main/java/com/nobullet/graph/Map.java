@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * Represents NxM matrix, treating 0 as empty space and values greater than 0 as walls.
+ * TODO: revisit this. Instead of long[][] use Cell[][].
  */
 public class Map {
 
@@ -230,35 +231,50 @@ public class Map {
         boolean found = false;
         while (!frontier.isEmpty()) {
             Cell current = frontier.poll().getCell();
-
+            // Early exit.
             if (current.equals(target)) {
                 found = true;
                 break;
             }
-
+            // For all the neighbors.
             for (Cell next : neighbors(current)) {
+                // Cost to next = previously calculated cost of travel to current + cost of the edge to neighbor.
                 long newCost = costSoFar.get(current) + cost(current, next);
+                // If neighbor has not been visited yet or 'new' cost to next is better, re-submit the neighbor to
+                // frontier with new priority (newCost), so the newly or revisited vertex could be reconsidered again.
                 if (!costSoFar.containsKey(next) || newCost < costSoFar.get(next)) {
+                    // Remember the cost.
                     costSoFar.put(next, newCost);
-                    frontier.add(new CellWithPriority(next, newCost + heuristic.apply(target, next)));
+                    // Remember the step.
                     cameFrom.put(next, current);
+                    // Submit or re-submit to frontier with new cost.
+                    // Add result of heuristic function invocation so vertices closer to target considered
+                    // earlier.
+                    frontier.add(new CellWithPriority(next, newCost + heuristic.apply(target, next)));
                 }
             }
         }
+
+        Path resultPath = null;
         if (!found) {
-            cameFrom.clear();
-            return Path.emptyPath();
+            resultPath = Path.emptyPath();
+        } else {
+            // Reconstruct the path.
+            List<Cell> path = new LinkedList<>();
+            Cell current = target;
+            while (!current.equals(source)) {
+                path.add(current);
+                current = cameFrom.get(current);
+            }
+            path.add(source);
+            Collections.reverse(path);
+            resultPath = new Path(this, path);
         }
-        List<Cell> path = new LinkedList<>();
-        Cell current = target;
-        while (current != null && !current.equals(source)) {
-            path.add(current);
-            current = cameFrom.get(current);
-        }
-        path.add(source);
-        Collections.reverse(path);
+        // Clean up.
         cameFrom.clear();
-        return new Path(this, path);
+        costSoFar.clear();
+        frontier.clear();
+        return resultPath;
     }
 
     /**
@@ -304,7 +320,7 @@ public class Map {
     public final long getNumberOfPlains() {
         return getNumberOfPlains(Constants.EMPTY_CELL_VALUE);
     }
-    
+
     /**
      * Counts number of different plains.
      *
