@@ -1,5 +1,8 @@
 package com.nobullet.graph;
 
+import java.util.Objects;
+import java.util.Optional;
+
 /**
  * Edge between two vertices.
  */
@@ -8,7 +11,7 @@ public class Edge {
     Vertex from;
     Vertex to;
     double cost;
-    Object data;
+    Optional<Object> data;
 
     public Edge(Vertex from, Vertex to) {
         this(from, to, 1.0D, null);
@@ -22,23 +25,15 @@ public class Edge {
         this.from = from;
         this.to = to;
         this.cost = cost;
-        this.data = data;
+        this.data = Optional.ofNullable(data);
     }
 
     public Vertex getFrom() {
         return from;
     }
 
-    public void setFrom(Vertex from) {
-        this.from = from;
-    }
-
     public Vertex getTo() {
         return to;
-    }
-
-    public void setTo(Vertex to) {
-        this.to = to;
     }
 
     public double getCost() {
@@ -49,17 +44,42 @@ public class Edge {
         this.cost = weight;
     }
 
-    public Object getData() {
+    public Optional<Object> getData() {
         return data;
     }
 
     public void setData(Object data) {
-        this.data = data;
+        this.data = Optional.ofNullable(data);
     }
     
     public void clear() {
         this.from = null;
         this.to = null;
+        this.to = null;
         this.data = null;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 17 * hash + Objects.hashCode(this.from);
+        hash = 17 * hash + Objects.hashCode(this.to);
+        hash = 17 * hash + (int) (Double.doubleToLongBits(this.cost) ^ (Double.doubleToLongBits(this.cost) >>> 32));
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        final Edge other = (Edge) obj;
+        if (Double.doubleToLongBits(this.cost) != Double.doubleToLongBits(other.cost)) {
+            return false;
+        }
+        if (!Objects.equals(this.from, other.from)) {
+            return false;
+        }
+        return Objects.equals(this.to, other.to);
     }
 }

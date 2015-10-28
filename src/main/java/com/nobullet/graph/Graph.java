@@ -13,19 +13,40 @@ import java.util.function.BiFunction;
 /**
  * Graph. E - number of edges. V - number of vertices.
  */
-public class Graph {
+public class Graph implements Cloneable {
 
     static final BiFunction<Vertex, Vertex, Double> DIJKSTRA_HEURISTIC = (Vertex next, Vertex goal) -> 0.0D;
     static final BiFunction<Vertex, Vertex, Double> A_STAR_HEURISTIC
             = (Vertex next, Vertex goal) -> next.distanceTo(goal).orElse(0.0D);
     static final Vertex NOWHERE = new Vertex("__NOWHERE__");
 
-    private final Map<String, Vertex> vertices;
-    private final Map<String, Vertex> verticesUnmodifiable;
+    final Map<String, Vertex> vertices;
+    final Map<String, Vertex> verticesUnmodifiable;
 
     public Graph() {
         this.vertices = new HashMap<>();
         this.verticesUnmodifiable = Collections.unmodifiableMap(this.vertices);
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source Source to copy.
+     */
+    public Graph(Graph source) {
+        this();
+        for (Map.Entry<String, Vertex> graphEntry : source.vertices.entrySet()) {
+            this.vertices.put(graphEntry.getKey(), new Vertex(graphEntry.getValue()));
+        }
+        for (Vertex sourceVertex : source.vertices.values()) {
+            for (Edge sourceEdge : sourceVertex.getOutgoingEdges()) {
+                addEdgeInternal(
+                        sourceEdge.getFrom().getKey(),
+                        sourceEdge.getTo().getKey(),
+                        sourceEdge.getCost(),
+                        sourceEdge.getData().orElseGet(() -> null));
+            }
+        }
     }
 
     public Collection<Vertex> getVertices() {
@@ -36,33 +57,73 @@ public class Graph {
         return this.vertices.get(key);
     }
 
-    public Vertex addVertex(String name) {
-        Vertex vertex = getVertex(name);
+    public Graph addVertex(String key) {
+        Vertex vertex = getVertex(key);
         if (vertex != null) {
-            return vertex;
+            return this;
         }
-        vertex = new Vertex(name);
-        this.vertices.put(name, vertex);
-        return vertex;
+        vertex = new Vertex(key);
+        this.vertices.put(key, vertex);
+        return this;
     }
-
-    public Edge addEdge(String key1, String key2) {
-        return addEdge(key1, key2, 1.0D);
+    
+    public Graph removeVertex(String key) {
+        return removeVertex(getVertex(key));
     }
-
-    public Edge addEdge(String name1, String name2, double cost) {
-        if (name1.equals(name2)) {
-            return null;
+    
+    public Graph removeVertex(Vertex v) {
+        for (Vertex other : vertices.values()) {
+            if (other.hasEdge(v)) {
+                other.removeEdgeTo(v);
+            }
         }
-        Vertex vertex1 = addVertex(name1);
-        Vertex vertex2 = addVertex(name2);
-        return vertex1.addEdge(vertex2, cost);
+        v.clear();
+        this.vertices.remove(v.getKey());
+        return this;
     }
 
-    public boolean hasEdge(String name1, String name2) {
-        Vertex vertex1 = getVertex(name1);
-        Vertex vertex2 = getVertex(name2);
+    private void addEdgeInternal(String fromKey, String toKey, double cost, Object data) {
+        if (fromKey.equals(toKey)) {
+            throw new IllegalStateException("Can't add cycle edge for: " + fromKey);
+        }
+        this.vertices.get(fromKey).addEdge(this.vertices.get(toKey), cost, data);
+    }
+
+    public Graph addEdge(String fromKey, String toKey) {
+        addEdge(fromKey, toKey, 1.0D);
+        return this;
+    }
+
+    public Graph addEdge(String fromKey, String toKey, double cost) {
+        addVertex(fromKey);
+        addVertex(toKey);
+        addEdgeInternal(fromKey, toKey, cost, null);
+        return this;
+    }
+
+    public boolean hasEdge(String fromKey, String toKey) {
+        Vertex vertex1 = getVertex(fromKey);
+        Vertex vertex2 = getVertex(toKey);
         return vertex1 != null && vertex1.hasEdge(vertex2);
+    }
+
+    public Edge getEdge(String fromKey, String toKey) {
+        Vertex vertex1 = getVertex(fromKey);
+        Vertex vertex2 = getVertex(toKey);
+        return vertex1.getEdge(vertex2);
+    }
+
+    public Edge getEdge(Vertex from, Vertex to) {
+        return from.getEdge(to);
+    }
+    
+    public Graph removeEdge(String fromKey, String toKey) {
+        return removeEdge(getVertex(fromKey), getVertex(toKey));
+    }
+    
+    public Graph removeEdge(Vertex v1, Vertex v2) {
+        v1.removeEdgeTo(v2);
+        return this;
     }
 
     /**
@@ -208,6 +269,17 @@ public class Graph {
         return path;
     }
 
+    public void maximumFlow(Vertex source, Vertex sink) {
+        Graph flow = new Graph(this);
+        Graph residual = new Graph(this);
+    }
+
+    /**
+     * Checks if the given vertex belongs to graph.
+     *
+     * @param vertex Vertex to check.
+     * @throws IllegalArgumentException If vertex is not in graph.
+     */
     public void checkVertex(Vertex vertex) {
         if (!hasVertex(vertex)) {
             throw new IllegalArgumentException(
@@ -215,12 +287,29 @@ public class Graph {
         }
     }
 
+    /**
+     * Checks if the given vertex belongs to graph.
+     *
+     * @param vertexKey Vertex key.
+     * @return Whether the given vertex belongs to graph.
+     */
     public boolean hasVertex(String vertexKey) {
         return verticesUnmodifiable.containsKey(vertexKey);
     }
 
+    /**
+     * Checks if the given vertex belongs to graph.
+     *
+     * @param vertex Vertex.
+     * @return Whether the given vertex belongs to graph.
+     */
     public boolean hasVertex(Vertex vertex) {
         return verticesUnmodifiable.containsKey(vertex.getKey());
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return new Graph(this);
     }
 
     /**

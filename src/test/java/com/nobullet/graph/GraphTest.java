@@ -20,21 +20,55 @@ public class GraphTest {
     static final Logger logger = Logger.getLogger(GraphTest.class.getName());
 
     @Test
-    public void testEdgesPresence() {
+    public void testGraph() {
         Graph graph = createBasicGraph();
+        verifyBasicGraph(graph);
+        // Make a copy and delete something from the copy of original basic graph.
+        Graph copy = new Graph(graph).
+                removeVertex("1").
+                removeVertex("2");
+        // Verify original graph.
+        verifyBasicGraph(graph);
 
-        assertTrue(graph.hasEdge("1", "2"));
-        assertTrue(graph.hasEdge("2", "3"));
-        assertTrue(graph.hasEdge("2", "4"));
-        assertTrue(graph.hasEdge("2", "5"));
-        assertTrue(graph.hasEdge("5", "6"));
-        assertTrue(graph.hasEdge("5", "7"));
-        assertTrue(graph.hasEdge("6", "7"));
+        // Verify copy.
+        assertTrue(copy.hasEdge("5", "6"));
+        assertTrue(copy.hasEdge("5", "7"));
+        assertTrue(copy.hasEdge("6", "7"));
 
-        assertFalse(graph.hasEdge("1", "7"));
-        assertFalse(graph.hasEdge("2", "7"));
-        assertFalse(graph.hasEdge("3", "7"));
-        assertFalse(graph.hasEdge("4", "7"));
+        assertFalse(copy.hasEdge("1", "2"));
+        assertFalse(copy.hasEdge("1", "7"));
+        assertFalse(copy.hasEdge("2", "7"));
+        assertFalse(copy.hasEdge("3", "7"));
+        assertFalse(copy.hasEdge("4", "7"));
+    }
+
+    @Test
+    public void testGraphWithCycle() {
+        Graph graph = createBasicGraph();
+        verifyBasicGraph(graph);
+
+        // Add cycle.
+        graph.addEdge("1", "2").
+                addEdge("2", "1");
+        // Make a copy and delete something from the copy of original basic graph.
+        Graph copy = new Graph(graph).
+                removeVertex("1");
+        // Verify original graph.
+        verifyBasicGraph(graph);
+        
+        // Verify copy.
+        assertTrue(copy.hasVertex("2"));
+        assertTrue(copy.hasEdge("5", "6"));
+        assertTrue(copy.hasEdge("5", "7"));
+        assertTrue(copy.hasEdge("6", "7"));
+
+        assertFalse(copy.hasVertex("1"));
+        assertFalse(copy.hasEdge("1", "2"));
+        assertFalse(copy.hasEdge("2", "1"));
+        assertFalse(copy.hasEdge("1", "7"));
+        assertFalse(copy.hasEdge("2", "7"));
+        assertFalse(copy.hasEdge("3", "7"));
+        assertFalse(copy.hasEdge("4", "7"));
     }
 
     @Test
@@ -51,50 +85,64 @@ public class GraphTest {
     @Test(expected = Graph.CycleException.class)
     public void testTopologicalSortCycleDetection() throws Graph.CycleException {
         List<String> path = new ArrayList<>();
-        Graph graph = new Graph();
-        graph.addEdge("0", "1");
-        graph.addEdge("1", "2");
-        graph.addEdge("2", "3");
-        graph.addEdge("3", "1");
-        graph.topologicalSort((vertex, order) -> path.add(vertex.getKey() + ":" + order));
+        new Graph().
+                addEdge("0", "1").
+                addEdge("1", "2").
+                addEdge("2", "3").
+                addEdge("3", "1").
+                topologicalSort((vertex, order) -> path.add(vertex.getKey() + ":" + order));
+    }
+
+    @Test
+    public void testDijkstra_small() {
+        Graph graph = new Graph().
+                addEdge("0", "1").
+                addEdge("1", "2").
+                addEdge("2", "3").
+                addEdge("3", "4").
+                addEdge("4", "5").
+                addEdge("0", "5", 20.0D);
+
+        assertListsEqual(listOfVertices("0", "1", "2", "3", "4", "5"),
+                graph.shortestPathDijkstra(graph.getVertex("0"), graph.getVertex("5")));
     }
 
     @Test
     public void testDijkstra() {
         Graph graph = createGraphFromBook(false);
-        assertListsEqual(listOfVertices("v1", "v4", "v7"), 
+        assertListsEqual(listOfVertices("v1", "v4", "v7"),
                 graph.shortestPathDijkstra(graph.getVertex("v1"), graph.getVertex("v7")));
-        
-        assertListsEqual(listOfVertices("v1", "v4", "v5"), 
+
+        assertListsEqual(listOfVertices("v1", "v4", "v5"),
                 graph.shortestPathDijkstra(graph.getVertex("v1"), graph.getVertex("v5")));
-        
-        assertListsEqual(listOfVertices("v3", "v1", "v4", "v5"), 
+
+        assertListsEqual(listOfVertices("v3", "v1", "v4", "v5"),
                 graph.shortestPathDijkstra(graph.getVertex("v3"), graph.getVertex("v5")));
     }
-    
+
     @Test
     public void testAStar_defaultsToDijkstra() {
         Graph graph = createGraphFromBook(false);
-        assertListsEqual(listOfVertices("v1", "v4", "v7"), 
+        assertListsEqual(listOfVertices("v1", "v4", "v7"),
                 graph.shortestPathAStar(graph.getVertex("v1"), graph.getVertex("v7")));
-        
-        assertListsEqual(listOfVertices("v1", "v4", "v5"), 
+
+        assertListsEqual(listOfVertices("v1", "v4", "v5"),
                 graph.shortestPathAStar(graph.getVertex("v1"), graph.getVertex("v5")));
-        
-        assertListsEqual(listOfVertices("v3", "v1", "v4", "v5"), 
+
+        assertListsEqual(listOfVertices("v3", "v1", "v4", "v5"),
                 graph.shortestPathAStar(graph.getVertex("v3"), graph.getVertex("v5")));
     }
-    
+
     @Test
     public void testAStar() {
         Graph graph = createGraphFromBook(true);
-        assertListsEqual(listOfVertices("v1", "v4", "v7"), 
+        assertListsEqual(listOfVertices("v1", "v4", "v7"),
                 graph.shortestPathAStar(graph.getVertex("v1"), graph.getVertex("v7")));
-        
-        assertListsEqual(listOfVertices("v1", "v4", "v5"), 
+
+        assertListsEqual(listOfVertices("v1", "v4", "v5"),
                 graph.shortestPathAStar(graph.getVertex("v1"), graph.getVertex("v5")));
-        
-        assertListsEqual(listOfVertices("v3", "v1", "v4", "v5"), 
+
+        assertListsEqual(listOfVertices("v3", "v1", "v4", "v5"),
                 graph.shortestPathAStar(graph.getVertex("v3"), graph.getVertex("v5")));
     }
 
@@ -105,44 +153,59 @@ public class GraphTest {
         }
         return result;
     }
-    
+
     static Graph createBasicGraph() {
-        Graph graph = new Graph();
-        graph.addEdge("1", "2");
-        graph.addEdge("2", "3");
-        graph.addEdge("2", "4");
-        graph.addEdge("2", "5");
-        graph.addEdge("5", "6");
-        graph.addEdge("6", "7");
-        graph.addEdge("5", "7");
-        graph.addEdge("7", "8");
-        graph.addEdge("8", "9");
-        graph.addEdge("9", "10");
-        graph.addEdge("0", "10");
-        graph.addEdge("00", "10");
-        graph.addEdge("000", "10");
-        return graph;
+        return new Graph().
+                addEdge("1", "2").
+                addEdge("2", "3").
+                addEdge("2", "4").
+                addEdge("2", "5").
+                addEdge("5", "6").
+                addEdge("6", "7").
+                addEdge("5", "7").
+                addEdge("7", "8").
+                addEdge("8", "9").
+                addEdge("9", "10").
+                addEdge("0", "10").
+                addEdge("00", "10").
+                addEdge("000", "10");
+    }
+
+    static void verifyBasicGraph(Graph graph) {
+        assertTrue(graph.hasEdge("1", "2"));
+        assertTrue(graph.hasEdge("2", "3"));
+        assertTrue(graph.hasEdge("2", "4"));
+        assertTrue(graph.hasEdge("2", "5"));
+        assertTrue(graph.hasEdge("5", "6"));
+        assertTrue(graph.hasEdge("5", "7"));
+        assertTrue(graph.hasEdge("6", "7"));
+
+        assertFalse(graph.hasEdge("1", "7"));
+        assertFalse(graph.hasEdge("2", "7"));
+        assertFalse(graph.hasEdge("3", "7"));
+        assertFalse(graph.hasEdge("4", "7"));
     }
 
     /**
      * From page 335 of "Data structures And Algorithm Analysis", by Mark Allen Weiss.
+     *
      * @param withPositions
-     * @return 
+     * @return
      */
     static Graph createGraphFromBook(boolean withPositions) {
-        Graph graph = new Graph();
-        graph.addEdge("v1", "v2", 2.0D);
-        graph.addEdge("v1", "v4", 1.0D);
-        graph.addEdge("v2", "v4", 3.0D);
-        graph.addEdge("v2", "v5", 10.0D);
-        graph.addEdge("v3", "v1", 4.0D);
-        graph.addEdge("v3", "v6", 5.0D);
-        graph.addEdge("v4", "v3", 2.0D);
-        graph.addEdge("v4", "v5", 2.0D);
-        graph.addEdge("v4", "v6", 8.0D);
-        graph.addEdge("v4", "v7", 4.0D);
-        graph.addEdge("v5", "v7", 6.0D);
-        graph.addEdge("v7", "v6", 1.0D);
+        Graph graph = new Graph().
+                addEdge("v1", "v2", 2.0D).
+                addEdge("v1", "v4", 1.0D).
+                addEdge("v2", "v4", 3.0D).
+                addEdge("v2", "v5", 10.0D).
+                addEdge("v3", "v1", 4.0D).
+                addEdge("v3", "v6", 5.0D).
+                addEdge("v4", "v3", 2.0D).
+                addEdge("v4", "v5", 2.0D).
+                addEdge("v4", "v6", 8.0D).
+                addEdge("v4", "v7", 4.0D).
+                addEdge("v5", "v7", 6.0D).
+                addEdge("v7", "v6", 1.0D);
         if (withPositions) {
             graph.getVertex("v1").setPosition(Vertex.Position.new2D(5, 10));
             // Making v2 as a very far point so A-star chooses v4 before prefering v2.

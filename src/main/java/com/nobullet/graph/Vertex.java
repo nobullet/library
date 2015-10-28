@@ -11,7 +11,7 @@ import java.util.Set;
 /**
  * Graph vertex. Not thread safe.
  */
-public class Vertex {
+public class Vertex implements Cloneable {
 
     final String key;
     final Map<Vertex, Edge> adjacent;
@@ -50,6 +50,15 @@ public class Vertex {
     }
 
     /**
+     * Copy constructor. Copies everything but the edges.
+     *
+     * @param source Source to copy.
+     */
+    public Vertex(Vertex source) {
+        this(source.getKey(), source.getPosition().orElseGet(() -> null), source.getData().orElseGet(() -> null));
+    }
+
+    /**
      * Constructs vertex with given data.
      *
      * @param key Vertex unique key.
@@ -76,12 +85,13 @@ public class Vertex {
         return adjacentUnmodifieble.keySet();
     }
 
-    public Edge removeAdjacent(Vertex to) {
-        return this.adjacent.remove(to);
-    }
-
-    public boolean removeEdge(Edge edge) {
-        return this.adjacent.remove(edge.getTo()) != null;
+    public Vertex removeEdgeTo(Vertex to) {
+        Edge existing = this.adjacent.get(to);
+        if (existing != null) {
+            existing.clear();
+            this.adjacent.remove(to);
+        }
+        return this;
     }
 
     public boolean hasEdge(Vertex to) {
@@ -92,17 +102,22 @@ public class Vertex {
         return adjacent.get(to);
     }
 
-    public Edge addEdge(Vertex to, double cost) {
-        if (this.equals(to)) {
-            return null;
+    public Vertex addEdge(Vertex to, double cost) {
+        addEdge(to, cost, null);
+        return this;
+    }
+
+    public Vertex addEdge(Vertex to, double cost, Object data) {
+        if (equals(to)) {
+            throw new IllegalStateException("Can't add an edge to itself.");
         }
         Edge edge = this.adjacent.get(to);
         if (edge == null) {
-            edge = new Edge(this, to, cost);
+            edge = new Edge(this, to, cost, data);
             this.adjacent.put(to, edge);
         }
         edge.setCost(cost);
-        return edge;
+        return this;
     }
 
     public String getKey() {
@@ -141,12 +156,22 @@ public class Vertex {
         return Objects.equals(this.key, other.key);
     }
 
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return new Vertex(this);
+    }
+
     /**
      * Clears the vertex.
      */
     public void clear() {
+        // Clean up edges.
+        for (Map.Entry<Vertex, Edge> vertexEntry : this.adjacent.entrySet()) {
+            vertexEntry.getValue().clear();
+        }
         this.adjacent.clear();
-        this.data = null;
+        this.data = Optional.empty();
+        this.position = Optional.empty();
     }
 
     /**
@@ -208,7 +233,7 @@ public class Vertex {
     /**
      * Two dimensional position.
      */
-    static class TwoDimensionalPosition implements Position {
+    static class TwoDimensionalPosition implements Position, Cloneable {
 
         final double x;
         final double y;
@@ -216,6 +241,27 @@ public class Vertex {
         public TwoDimensionalPosition(double x, double y) {
             this.x = x;
             this.y = y;
+        }
+
+        public TwoDimensionalPosition(TwoDimensionalPosition source) {
+            this(source.x, source.y);
+        }
+
+        /**
+         * Calculates distance between two positions.
+         *
+         * @param position Other position.
+         * @return Distance between two positions.
+         */
+        @Override
+        public Optional<Double> distanceTo(Position position) {
+            if (getClass() != position.getClass()) {
+                return Optional.empty();
+            }
+            TwoDimensionalPosition other = (TwoDimensionalPosition) position;
+            double dx = this.x - other.x;
+            double dy = this.y - other.y;
+            return Optional.of(Math.sqrt(dx * dx + dy * dy));
         }
 
         @Override
@@ -242,20 +288,14 @@ public class Vertex {
         }
 
         /**
-         * Calculates distance between two positions.
+         * Clones the position. Uses copy constructor.
          *
-         * @param position Other position.
-         * @return Distance between two positions.
+         * @return Copy of the object.
+         * @throws CloneNotSupportedException
          */
         @Override
-        public Optional<Double> distanceTo(Position position) {
-            if (getClass() != position.getClass()) {
-                return Optional.empty();
-            }
-            TwoDimensionalPosition other = (TwoDimensionalPosition) position;
-            double dx = this.x - other.x;
-            double dy = this.y - other.y;
-            return Optional.of(Math.sqrt(dx * dx + dy * dy));
+        public Object clone() throws CloneNotSupportedException {
+            return new TwoDimensionalPosition(this);
         }
     }
 
@@ -271,6 +311,30 @@ public class Vertex {
         public EarthGeographicPosition(double lon, double lat) {
             this.lon = lon;
             this.lat = lat;
+        }
+
+        public EarthGeographicPosition(EarthGeographicPosition source) {
+            this(source.lon, source.lat);
+        }
+
+        /**
+         * Calculates distance between two positions in Kilometers.
+         *
+         * @param position Other position.
+         * @return Distance between two positions in Kilometers.
+         */
+        @Override
+        public Optional<Double> distanceTo(Position position) {
+            if (getClass() != position.getClass()) {
+                return Optional.empty();
+            }
+            EarthGeographicPosition other = (EarthGeographicPosition) position;
+            double sinDlat = Math.sin(Math.toRadians(this.lat - other.lat) / 2);
+            double sinDlon = Math.sin(Math.toRadians(this.lon - other.lon) / 2);
+            double a = sinDlat * sinDlat
+                    + Math.cos(Math.toRadians(other.lat)) * Math.cos(Math.toRadians(this.lat)) * sinDlon * sinDlon;
+            double angle = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return Optional.of(angle * RADIUS);
         }
 
         @Override
@@ -297,23 +361,14 @@ public class Vertex {
         }
 
         /**
-         * Calculates distance between two positions in Kilometers.
+         * Clones the position. Uses copy constructor.
          *
-         * @param position Other position.
-         * @return Distance between two positions in Kilometers.
+         * @return Copy of the object.
+         * @throws CloneNotSupportedException
          */
         @Override
-        public Optional<Double> distanceTo(Position position) {
-            if (getClass() != position.getClass()) {
-                return Optional.empty();
-            }
-            EarthGeographicPosition other = (EarthGeographicPosition) position;
-            double sinDlat = Math.sin(Math.toRadians(this.lat - other.lat) / 2);
-            double sinDlon = Math.sin(Math.toRadians(this.lon - other.lon) / 2);
-            double a = sinDlat * sinDlat
-                    + Math.cos(Math.toRadians(other.lat)) * Math.cos(Math.toRadians(this.lat)) * sinDlon * sinDlon;
-            double angle = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return Optional.of(angle * RADIUS);
+        public Object clone() throws CloneNotSupportedException {
+            return new EarthGeographicPosition(this);
         }
     }
 }
