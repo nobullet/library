@@ -21,7 +21,7 @@ public class GraphTest {
 
     @Test
     public void testGraph() {
-        Graph graph = createBasicGraph();
+        Graph graph = newBasicGraph();
         verifyBasicGraph(graph);
         // Make a copy and delete something from the copy of original basic graph.
         Graph copy = new Graph(graph).
@@ -44,7 +44,7 @@ public class GraphTest {
 
     @Test
     public void testGraphWithCycle() {
-        Graph graph = createBasicGraph();
+        Graph graph = newBasicGraph();
         verifyBasicGraph(graph);
 
         // Add cycle.
@@ -55,7 +55,7 @@ public class GraphTest {
                 removeVertex("1");
         // Verify original graph.
         verifyBasicGraph(graph);
-        
+
         // Verify copy.
         assertTrue(copy.hasVertex("2"));
         assertTrue(copy.hasEdge("5", "6"));
@@ -74,7 +74,7 @@ public class GraphTest {
     @Test
     public void testTopologicalSort() throws Graph.CycleException {
         List<String> path = new ArrayList<>();
-        Graph graph = createBasicGraph();
+        Graph graph = newBasicGraph();
         graph.topologicalSort((vertex, order) -> path.add(vertex.getKey() + ":" + order));
         Collections.sort(path);
         StringJoiner joiner = new StringJoiner(",");
@@ -109,7 +109,7 @@ public class GraphTest {
 
     @Test
     public void testDijkstra() {
-        Graph graph = createGraphFromBook(false);
+        Graph graph = newGraphFromBook(false);
         assertListsEqual(listOfVertices("v1", "v4", "v7"),
                 graph.shortestPathDijkstra(graph.getVertex("v1"), graph.getVertex("v7")));
 
@@ -120,9 +120,30 @@ public class GraphTest {
                 graph.shortestPathDijkstra(graph.getVertex("v3"), graph.getVertex("v5")));
     }
 
+    @Test(expected = Graph.CycleException.class)
+    public void testDijkstra_longestPath_hasCycle() throws Graph.CycleException {
+        Graph graph = newGraphFromBook(false);
+        graph.longestPathDijkstra(graph.getVertex("v1"), graph.getVertex("v7"));
+    }
+
+    @Test
+    public void testDijkstra_longestPath() throws Graph.CycleException {
+        Graph graph = newGraphFromBook(false);
+        graph.removeEdge("v4", "v3"); // break both cycles.
+        
+        assertListsEqual(listOfVertices("v1", "v2", "v5", "v7"),
+                graph.longestPathDijkstra(graph.getVertex("v1"), graph.getVertex("v7")));
+
+        assertListsEqual(listOfVertices("v1", "v2", "v5"),
+                graph.longestPathDijkstra(graph.getVertex("v1"), graph.getVertex("v5")));
+
+        assertListsEqual(listOfVertices("v3", "v1", "v2", "v5", "v7", "v6"),
+                graph.longestPathDijkstra(graph.getVertex("v3"), graph.getVertex("v6")));
+    }
+
     @Test
     public void testAStar_defaultsToDijkstra() {
-        Graph graph = createGraphFromBook(false);
+        Graph graph = newGraphFromBook(false);
         assertListsEqual(listOfVertices("v1", "v4", "v7"),
                 graph.shortestPathAStar(graph.getVertex("v1"), graph.getVertex("v7")));
 
@@ -135,7 +156,7 @@ public class GraphTest {
 
     @Test
     public void testAStar() {
-        Graph graph = createGraphFromBook(true);
+        Graph graph = newGraphFromBook(true);
         assertListsEqual(listOfVertices("v1", "v4", "v7"),
                 graph.shortestPathAStar(graph.getVertex("v1"), graph.getVertex("v7")));
 
@@ -154,23 +175,6 @@ public class GraphTest {
         return result;
     }
 
-    static Graph createBasicGraph() {
-        return new Graph().
-                addEdge("1", "2").
-                addEdge("2", "3").
-                addEdge("2", "4").
-                addEdge("2", "5").
-                addEdge("5", "6").
-                addEdge("6", "7").
-                addEdge("5", "7").
-                addEdge("7", "8").
-                addEdge("8", "9").
-                addEdge("9", "10").
-                addEdge("0", "10").
-                addEdge("00", "10").
-                addEdge("000", "10");
-    }
-
     static void verifyBasicGraph(Graph graph) {
         assertTrue(graph.hasEdge("1", "2"));
         assertTrue(graph.hasEdge("2", "3"));
@@ -187,12 +191,13 @@ public class GraphTest {
     }
 
     /**
-     * From page 335 of "Data structures And Algorithm Analysis", by Mark Allen Weiss.
+     * From page 335 of "Data structures And Algorithm Analysis", by Mark Allen Weiss.<p>
+     * Graph has cycles: v1->v4->v3, v1->v2->v4->v3.
      *
-     * @param withPositions
-     * @return
+     * @param withPositions Whether to add dummy positions to the graph.
+     * @return Graph example.
      */
-    static Graph createGraphFromBook(boolean withPositions) {
+    static Graph newGraphFromBook(boolean withPositions) {
         Graph graph = new Graph().
                 addEdge("v1", "v2", 2.0D).
                 addEdge("v1", "v4", 1.0D).
@@ -217,5 +222,22 @@ public class GraphTest {
             graph.getVertex("v7").setPosition(Vertex.Position.new2D(15, 0));
         }
         return graph;
+    }
+
+    static Graph newBasicGraph() {
+        return new Graph().
+                addEdge("1", "2").
+                addEdge("2", "3").
+                addEdge("2", "4").
+                addEdge("2", "5").
+                addEdge("5", "6").
+                addEdge("6", "7").
+                addEdge("5", "7").
+                addEdge("7", "8").
+                addEdge("8", "9").
+                addEdge("9", "10").
+                addEdge("0", "10").
+                addEdge("00", "10").
+                addEdge("000", "10");
     }
 }

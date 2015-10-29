@@ -16,13 +16,13 @@ public class ListsTest {
     public void testCompact() {
         List<IntegerGroup> groups = Lists.compact(newArrayList(4, 4, 4, 1, 1, 4, 4, 5, 5), IntegerGroup::new);
         assertListsEqual(toGroups(4, 3, 1, 2, 4, 2, 5, 2), groups);
-        
+
         groups = Lists.compact(newArrayList(4, 4, 4, 1, 1, 4, 4, 5, 5, 5), IntegerGroup::new);
         assertListsEqual(toGroups(4, 3, 1, 2, 4, 2, 5, 3), groups);
-        
+
         groups = Lists.compact(newArrayList(4, 4, 4, 1, 1, 4, 4, 5), IntegerGroup::new);
         assertListsEqual(toGroups(4, 3, 1, 2, 4, 2, 5, 1), groups);
-        
+
         groups = Lists.compact(newArrayList(1, 2, 3, 4, 4, 5, 5, 5, 6, 7), IntegerGroup::new);
         assertListsEqual(toGroups(1, 1, 2, 1, 3, 1, 4, 2, 5, 3, 6, 1, 7, 1), groups);
     }

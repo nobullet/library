@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 /**
  * Graph. E - number of edges. V - number of vertices.
@@ -58,7 +59,7 @@ public class Graph implements Cloneable {
     }
 
     public Graph addVertex(String key) {
-        Vertex vertex = getVertex(key);
+        Vertex vertex = this.vertices.get(key);
         if (vertex != null) {
             return this;
         }
@@ -66,12 +67,15 @@ public class Graph implements Cloneable {
         this.vertices.put(key, vertex);
         return this;
     }
-    
+
     public Graph removeVertex(String key) {
-        return removeVertex(getVertex(key));
+        return removeVertex(this.vertices.get(key));
     }
-    
+
     public Graph removeVertex(Vertex v) {
+        if (v == null) {
+            throw new NullPointerException("Vertex expected.");
+        }
         for (Vertex other : vertices.values()) {
             if (other.hasEdge(v)) {
                 other.removeEdgeTo(v);
@@ -86,7 +90,10 @@ public class Graph implements Cloneable {
         if (fromKey.equals(toKey)) {
             throw new IllegalStateException("Can't add cycle edge for: " + fromKey);
         }
-        this.vertices.get(fromKey).addEdge(this.vertices.get(toKey), cost, data);
+        Vertex from = this.vertices.get(fromKey);
+        Vertex to = this.vertices.get(toKey);
+        checkFromTo(fromKey, toKey, from, to);
+        from.addEdge(to, cost, data);
     }
 
     public Graph addEdge(String fromKey, String toKey) {
@@ -102,25 +109,26 @@ public class Graph implements Cloneable {
     }
 
     public boolean hasEdge(String fromKey, String toKey) {
-        Vertex vertex1 = getVertex(fromKey);
-        Vertex vertex2 = getVertex(toKey);
-        return vertex1 != null && vertex1.hasEdge(vertex2);
+        Vertex from = this.vertices.get(fromKey);
+        Vertex to = this.vertices.get(toKey);
+        return from != null && to != null && from.hasEdge(to);
     }
 
     public Edge getEdge(String fromKey, String toKey) {
-        Vertex vertex1 = getVertex(fromKey);
-        Vertex vertex2 = getVertex(toKey);
-        return vertex1.getEdge(vertex2);
+        Vertex from = getVertex(fromKey);
+        Vertex to = getVertex(toKey);
+        checkFromTo(fromKey, toKey, from, to);
+        return from.getEdge(to);
     }
 
     public Edge getEdge(Vertex from, Vertex to) {
         return from.getEdge(to);
     }
-    
+
     public Graph removeEdge(String fromKey, String toKey) {
         return removeEdge(getVertex(fromKey), getVertex(toKey));
     }
-    
+
     public Graph removeEdge(Vertex v1, Vertex v2) {
         v1.removeEdgeTo(v2);
         return this;
@@ -183,7 +191,11 @@ public class Graph implements Cloneable {
      * @return List of vertices that create the path.
      */
     public List<Vertex> shortestPathAStar(Vertex source, Vertex target) {
-        return shortestPathTemplate(source, target, A_STAR_HEURISTIC);
+        try {
+            return pathTemplate(source, target, A_STAR_HEURISTIC, false);
+        } catch (CycleException ce) {
+            throw new IllegalStateException("Internal graph error: AStar must not throw CycleException.", ce);
+        }
     }
 
     /**
@@ -194,21 +206,44 @@ public class Graph implements Cloneable {
      * @return List of vertices that create the path.
      */
     public List<Vertex> shortestPathDijkstra(Vertex source, Vertex target) {
-        return shortestPathTemplate(source, target, DIJKSTRA_HEURISTIC);
+        try {
+            return pathTemplate(source, target, DIJKSTRA_HEURISTIC, false);
+        } catch (CycleException ce) {
+            throw new IllegalStateException("Internal graph error: Dijkstra must not throw CycleException.", ce);
+        }
     }
 
     /**
-     * Template for A* and Dijkstra algorithms.
+     * Dijkstra's longest path algorithm.
+     *
+     * @param source Source vertex.
+     * @param target Target vertex.
+     * @return List of vertices that create the path.
+     * @throws CycleException When cycle found.
+     */
+    public List<Vertex> longestPathDijkstra(Vertex source, Vertex target) throws CycleException {
+        return pathTemplate(source, target, DIJKSTRA_HEURISTIC, true);
+    }
+
+    /**
+     * Template for path algorithms.
      *
      * @param source Source vertex.
      * @param target Target vertex.
      * @param heuristic Heuristic function.
+     * @param longest Whether to find longest or shortest path.
      * @return List of vertices that create the path.
+     * @throws CycleException When cycle found.
      */
-    public List<Vertex> shortestPathTemplate(Vertex source, Vertex target,
-            BiFunction<Vertex, Vertex, Double> heuristic) {
+    public List<Vertex> pathTemplate(Vertex source, Vertex target,
+            BiFunction<Vertex, Vertex, Double> heuristic, boolean longest) throws CycleException {
         checkVertex(source);
         checkVertex(target);
+
+        MutableDouble allEdgesSum = new MutableDouble();
+        if (longest) {
+            traverseAllEdges(e -> allEdgesSum.addAndGet(e.getCost()));
+        }
 
         PriorityQueue<VertexWithPriority> frontier = new PriorityQueue<>();
         frontier.add(new VertexWithPriority(source, 0.0D));
@@ -219,12 +254,10 @@ public class Graph implements Cloneable {
         Map<Vertex, Vertex> cameFrom = new HashMap<>();
         cameFrom.put(source, NOWHERE);
 
-        boolean found = false;
         while (!frontier.isEmpty()) {
             Vertex current = frontier.poll().getVertex();
-            // Early exit.
-            if (current.equals(target)) {
-                found = true;
+            // Early exit for shortest paths.
+            if (!longest && current.equals(target)) {
                 break;
             }
             // For all the neighbors.
@@ -233,10 +266,14 @@ public class Graph implements Cloneable {
                 Vertex next = adjacentEdge.getTo();
                 // Cost to next = previously calculated cost of travel to current + cost of the edge to neighbor.
                 double newCost = costSoFar.get(current) + adjacentEdge.getCost();
+                if (longest && newCost > allEdgesSum.getValue()) {
+                    throw new CycleException("There is a cycle in the graph.");
+                }
                 // If neighbor has not been visited yet or 'new' cost to next is better, re-submit the neighbor to
                 // frontier with new priority (newCost + heuristic), so the newly or revisited vertex could 
                 // be reconsidered again.
-                if (!costSoFar.containsKey(next) || newCost < costSoFar.get(next)) {
+                if (!costSoFar.containsKey(next)
+                        || (longest ? newCost > costSoFar.get(next) : newCost < costSoFar.get(next))) {
                     // Remember the cost.
                     costSoFar.put(next, newCost);
                     // Remember the step.
@@ -244,13 +281,17 @@ public class Graph implements Cloneable {
                     // Submit or re-submit to frontier with new cost.
                     // Add result of heuristic function invocation so vertices closer to target considered
                     // earlier.
-                    frontier.offer(new VertexWithPriority(next, newCost + heuristic.apply(target, next)));
+                    double newPriority = newCost + heuristic.apply(target, next);
+                    if (longest) {
+                        newPriority *= -1.0D;
+                    }
+                    frontier.offer(new VertexWithPriority(next, newPriority));
                 }
             }
         }
 
         List<Vertex> path = null;
-        if (!found) {
+        if (!cameFrom.containsKey(target)) {
             return Collections.emptyList();
         } else {
             // Reconstruct the path.
@@ -270,7 +311,7 @@ public class Graph implements Cloneable {
     }
 
     public void maximumFlow(Vertex source, Vertex sink) {
-        Graph flow = new Graph(this);
+        Graph flow = new Graph();
         Graph residual = new Graph(this);
     }
 
@@ -310,6 +351,23 @@ public class Graph implements Cloneable {
     @Override
     public Object clone() throws CloneNotSupportedException {
         return new Graph(this);
+    }
+
+    private void traverseAllEdges(Consumer<Edge> consumer) {
+        for (Vertex vertex : vertices.values()) {
+            for (Edge edge : vertex.getOutgoingEdges()) {
+                consumer.accept(edge);
+            }
+        }
+    }
+
+    private void checkFromTo(String fromKey, String toKey, Vertex from, Vertex to) {
+        if (from == null) {
+            throw new IllegalArgumentException("Can't find vertex for key: " + fromKey);
+        }
+        if (to == null) {
+            throw new IllegalArgumentException("Can't find vertex for key: " + toKey);
+        }
     }
 
     /**
@@ -360,6 +418,9 @@ public class Graph implements Cloneable {
         }
     }
 
+    /**
+     * Cycle exception.
+     */
     public static class CycleException extends Exception {
 
         public CycleException() {
@@ -370,6 +431,9 @@ public class Graph implements Cloneable {
         }
     }
 
+    /**
+     * Mutable long for internals (topological sort).
+     */
     private static class MutableLong {
 
         private long value;
@@ -386,8 +450,9 @@ public class Graph implements Cloneable {
             return value;
         }
 
-        public void setValue(long value) {
+        public MutableLong setValue(long value) {
             this.value = value;
+            return this;
         }
 
         public long incrementAndGet() {
@@ -398,9 +463,69 @@ public class Graph implements Cloneable {
             return --this.value;
         }
 
+        public long addAndGet(long other) {
+            this.value += other;
+            return this.value;
+        }
+
+        public long subtractAndGet(long other) {
+            this.value -= other;
+            return this.value;
+        }
+
         @Override
         public String toString() {
             return "MutableLong{" + value + '}';
+        }
+    }
+
+    /**
+     * Mutable double for internals (shortest/longest paths).
+     */
+    private static class MutableDouble {
+
+        private double value;
+
+        public MutableDouble() {
+            this.value = 0.0D;
+        }
+
+        public MutableDouble(double value) {
+            this.value = value;
+        }
+
+        public double getValue() {
+            return value;
+        }
+
+        public MutableDouble setValue(double value) {
+            this.value = value;
+            return this;
+        }
+
+        public double incrementAndGet() {
+            this.value += 1.0D;
+            return this.value;
+        }
+
+        public double decrementAndGet() {
+            this.value -= 1.0D;
+            return this.value;
+        }
+
+        public double addAndGet(double other) {
+            this.value += other;
+            return this.value;
+        }
+
+        public double subtractAndGet(double other) {
+            this.value -= other;
+            return this.value;
+        }
+
+        @Override
+        public String toString() {
+            return "MutableDouble{" + value + '}';
         }
     }
 }
