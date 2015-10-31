@@ -1,6 +1,5 @@
 package com.nobullet.graph;
 
-import static com.nobullet.MoreAssertions.assertListsEqual;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -18,28 +17,49 @@ import org.junit.Test;
 public class GraphTest {
 
     static final Logger logger = Logger.getLogger(GraphTest.class.getName());
-
+    static final Key k000 = Key.of("000");
+    static final Key k00 = Key.of("00");
+    static final Key k0 = Key.of("0");
+    static final Key k1 = Key.of("1");
+    static final Key k2 = Key.of("2");
+    static final Key k3 = Key.of("3");
+    static final Key k4 = Key.of("4");
+    static final Key k5 = Key.of("5");
+    static final Key k6 = Key.of("6");
+    static final Key k7 = Key.of("7");
+    static final Key k8 = Key.of("8");
+    static final Key k9 = Key.of("9");
+    static final Key k10 = Key.of("10");
+    static final Key v1 = Key.of("v1");
+    static final Key v2 = Key.of("v2");
+    static final Key v3 = Key.of("v3");
+    static final Key v4 = Key.of("v4");
+    static final Key v5 = Key.of("v5");
+    static final Key v6 = Key.of("v6");
+    static final Key v7 = Key.of("v7");
+    
+    
     @Test
     public void testGraph() {
         Graph graph = newBasicGraph();
         verifyBasicGraph(graph);
         // Make a copy and delete something from the copy of original basic graph.
         Graph copy = new Graph(graph).
-                removeVertex("1").
-                removeVertex("2");
+                removeVertex(k1).
+                removeVertex(k2);
         // Verify original graph.
         verifyBasicGraph(graph);
 
         // Verify copy.
-        assertTrue(copy.hasEdge("5", "6"));
-        assertTrue(copy.hasEdge("5", "7"));
-        assertTrue(copy.hasEdge("6", "7"));
+        assertTrue(copy.hasEdge(k5, k6));
+        assertTrue(copy.hasEdge(k5, k7));
+        assertTrue(copy.hasEdge(k6, k7));
 
-        assertFalse(copy.hasEdge("1", "2"));
-        assertFalse(copy.hasEdge("1", "7"));
-        assertFalse(copy.hasEdge("2", "7"));
-        assertFalse(copy.hasEdge("3", "7"));
-        assertFalse(copy.hasEdge("4", "7"));
+        assertFalse(copy.hasEdge(k1, k2));
+        assertFalse(copy.hasEdge(k1, k7));
+        assertFalse(copy.hasEdge(k2, k7));
+        assertFalse(copy.hasEdge(k3, k7));
+        assertFalse(copy.hasEdge(k4, k7));
     }
 
     @Test
@@ -48,34 +68,34 @@ public class GraphTest {
         verifyBasicGraph(graph);
 
         // Add cycle.
-        graph.addEdge("1", "2").
-                addEdge("2", "1");
+        graph.addEdge(k1, k2).
+                addEdge(k2, k1);
         // Make a copy and delete something from the copy of original basic graph.
         Graph copy = new Graph(graph).
-                removeVertex("1");
+                removeVertex(k1);
         // Verify original graph.
         verifyBasicGraph(graph);
 
         // Verify copy.
-        assertTrue(copy.hasVertex("2"));
-        assertTrue(copy.hasEdge("5", "6"));
-        assertTrue(copy.hasEdge("5", "7"));
-        assertTrue(copy.hasEdge("6", "7"));
+        assertTrue(copy.hasVertex(k2));
+        assertTrue(copy.hasEdge(k5, k6));
+        assertTrue(copy.hasEdge(k5, k7));
+        assertTrue(copy.hasEdge(k6, k7));
 
-        assertFalse(copy.hasVertex("1"));
-        assertFalse(copy.hasEdge("1", "2"));
-        assertFalse(copy.hasEdge("2", "1"));
-        assertFalse(copy.hasEdge("1", "7"));
-        assertFalse(copy.hasEdge("2", "7"));
-        assertFalse(copy.hasEdge("3", "7"));
-        assertFalse(copy.hasEdge("4", "7"));
+        assertFalse(copy.hasVertex(k1));
+        assertFalse(copy.hasEdge(k1, k2));
+        assertFalse(copy.hasEdge(k2, k1));
+        assertFalse(copy.hasEdge(k1, k7));
+        assertFalse(copy.hasEdge(k2, k7));
+        assertFalse(copy.hasEdge(k3, k7));
+        assertFalse(copy.hasEdge(k4, k7));
     }
 
     @Test
     public void testTopologicalSort() throws Graph.CycleException {
         List<String> path = new ArrayList<>();
         Graph graph = newBasicGraph();
-        graph.topologicalSort((vertex, order) -> path.add(vertex.getKey() + ":" + order));
+        graph.topologicalSort((vertexKey, order) -> path.add(vertexKey + ":" + order));
         Collections.sort(path);
         StringJoiner joiner = new StringJoiner(",");
         path.stream().forEach(s -> joiner.add(s));
@@ -86,108 +106,34 @@ public class GraphTest {
     public void testTopologicalSortCycleDetection() throws Graph.CycleException {
         List<String> path = new ArrayList<>();
         new Graph().
-                addEdge("0", "1").
-                addEdge("1", "2").
-                addEdge("2", "3").
-                addEdge("3", "1").
-                topologicalSort((vertex, order) -> path.add(vertex.getKey() + ":" + order));
+                addEdge(k0, k1).
+                addEdge(k1, k2).
+                addEdge(k2, k3).
+                addEdge(k3, k1).
+                topologicalSort((key, order) -> path.add(key + ":" + order));
     }
 
-    @Test
-    public void testDijkstra_small() {
-        Graph graph = new Graph().
-                addEdge("0", "1").
-                addEdge("1", "2").
-                addEdge("2", "3").
-                addEdge("3", "4").
-                addEdge("4", "5").
-                addEdge("0", "5", 20.0D);
-
-        assertListsEqual(listOfVertices("0", "1", "2", "3", "4", "5"),
-                graph.shortestPathDijkstra(graph.getVertex("0"), graph.getVertex("5")));
-    }
-
-    @Test
-    public void testDijkstra() {
-        Graph graph = newGraphFromBook(false);
-        assertListsEqual(listOfVertices("v1", "v4", "v7"),
-                graph.shortestPathDijkstra(graph.getVertex("v1"), graph.getVertex("v7")));
-
-        assertListsEqual(listOfVertices("v1", "v4", "v5"),
-                graph.shortestPathDijkstra(graph.getVertex("v1"), graph.getVertex("v5")));
-
-        assertListsEqual(listOfVertices("v3", "v1", "v4", "v5"),
-                graph.shortestPathDijkstra(graph.getVertex("v3"), graph.getVertex("v5")));
-    }
-
-    @Test(expected = Graph.CycleException.class)
-    public void testDijkstra_longestPath_hasCycle() throws Graph.CycleException {
-        Graph graph = newGraphFromBook(false);
-        graph.longestPathDijkstra(graph.getVertex("v1"), graph.getVertex("v7"));
-    }
-
-    @Test
-    public void testDijkstra_longestPath() throws Graph.CycleException {
-        Graph graph = newGraphFromBook(false);
-        graph.removeEdge("v4", "v3"); // break both cycles.
-        
-        assertListsEqual(listOfVertices("v1", "v2", "v5", "v7"),
-                graph.longestPathDijkstra(graph.getVertex("v1"), graph.getVertex("v7")));
-
-        assertListsEqual(listOfVertices("v1", "v2", "v5"),
-                graph.longestPathDijkstra(graph.getVertex("v1"), graph.getVertex("v5")));
-
-        assertListsEqual(listOfVertices("v3", "v1", "v2", "v5", "v7", "v6"),
-                graph.longestPathDijkstra(graph.getVertex("v3"), graph.getVertex("v6")));
-    }
-
-    @Test
-    public void testAStar_defaultsToDijkstra() {
-        Graph graph = newGraphFromBook(false);
-        assertListsEqual(listOfVertices("v1", "v4", "v7"),
-                graph.shortestPathAStar(graph.getVertex("v1"), graph.getVertex("v7")));
-
-        assertListsEqual(listOfVertices("v1", "v4", "v5"),
-                graph.shortestPathAStar(graph.getVertex("v1"), graph.getVertex("v5")));
-
-        assertListsEqual(listOfVertices("v3", "v1", "v4", "v5"),
-                graph.shortestPathAStar(graph.getVertex("v3"), graph.getVertex("v5")));
-    }
-
-    @Test
-    public void testAStar() {
-        Graph graph = newGraphFromBook(true);
-        assertListsEqual(listOfVertices("v1", "v4", "v7"),
-                graph.shortestPathAStar(graph.getVertex("v1"), graph.getVertex("v7")));
-
-        assertListsEqual(listOfVertices("v1", "v4", "v5"),
-                graph.shortestPathAStar(graph.getVertex("v1"), graph.getVertex("v5")));
-
-        assertListsEqual(listOfVertices("v3", "v1", "v4", "v5"),
-                graph.shortestPathAStar(graph.getVertex("v3"), graph.getVertex("v5")));
-    }
-
-    static List<Vertex> listOfVertices(String... args) {
-        List<Vertex> result = Lists.newArrayListWithExpectedSize(args.length);
-        for (String arg : args) {
-            result.add(new Vertex(arg));
+    static List<Key> listOfVertices(Key... args) {
+        List<Key> result = Lists.newArrayListWithExpectedSize(args.length);
+        for (Key arg : args) {
+            result.add(arg);
         }
         return result;
     }
 
     static void verifyBasicGraph(Graph graph) {
-        assertTrue(graph.hasEdge("1", "2"));
-        assertTrue(graph.hasEdge("2", "3"));
-        assertTrue(graph.hasEdge("2", "4"));
-        assertTrue(graph.hasEdge("2", "5"));
-        assertTrue(graph.hasEdge("5", "6"));
-        assertTrue(graph.hasEdge("5", "7"));
-        assertTrue(graph.hasEdge("6", "7"));
+        assertTrue(graph.hasEdge(k1, k2));
+        assertTrue(graph.hasEdge(k2, k3));
+        assertTrue(graph.hasEdge(k2, k4));
+        assertTrue(graph.hasEdge(k2, k5));
+        assertTrue(graph.hasEdge(k5, k6));
+        assertTrue(graph.hasEdge(k5, k7));
+        assertTrue(graph.hasEdge(k6, k7));
 
-        assertFalse(graph.hasEdge("1", "7"));
-        assertFalse(graph.hasEdge("2", "7"));
-        assertFalse(graph.hasEdge("3", "7"));
-        assertFalse(graph.hasEdge("4", "7"));
+        assertFalse(graph.hasEdge(k1, k7));
+        assertFalse(graph.hasEdge(k2, k7));
+        assertFalse(graph.hasEdge(k3, k7));
+        assertFalse(graph.hasEdge(k4, k7));
     }
 
     /**
@@ -199,45 +145,45 @@ public class GraphTest {
      */
     static Graph newGraphFromBook(boolean withPositions) {
         Graph graph = new Graph().
-                addEdge("v1", "v2", 2.0D).
-                addEdge("v1", "v4", 1.0D).
-                addEdge("v2", "v4", 3.0D).
-                addEdge("v2", "v5", 10.0D).
-                addEdge("v3", "v1", 4.0D).
-                addEdge("v3", "v6", 5.0D).
-                addEdge("v4", "v3", 2.0D).
-                addEdge("v4", "v5", 2.0D).
-                addEdge("v4", "v6", 8.0D).
-                addEdge("v4", "v7", 4.0D).
-                addEdge("v5", "v7", 6.0D).
-                addEdge("v7", "v6", 1.0D);
+                addEdge(v1, v2, 2.0D).
+                addEdge(v1, v4, 1.0D).
+                addEdge(v2, v4, 3.0D).
+                addEdge(v2, v5, 10.0D).
+                addEdge(v3, v1, 4.0D).
+                addEdge(v3, v6, 5.0D).
+                addEdge(v4, v3, 2.0D).
+                addEdge(v4, v5, 2.0D).
+                addEdge(v4, v6, 8.0D).
+                addEdge(v4, v7, 4.0D).
+                addEdge(v5, v7, 6.0D).
+                addEdge(v7, v6, 1.0D);
         if (withPositions) {
-            graph.getVertex("v1").setPosition(Vertex.Position.new2D(5, 10));
+            graph.setVertexPosition(v1, VertexPosition.new2D(5, 10));
             // Making v2 as a very far point so A-star chooses v4 before prefering v2.
-            graph.getVertex("v2").setPosition(Vertex.Position.new2D(1500, 1000));
-            graph.getVertex("v3").setPosition(Vertex.Position.new2D(0, 5));
-            graph.getVertex("v4").setPosition(Vertex.Position.new2D(10, 10));
-            graph.getVertex("v5").setPosition(Vertex.Position.new2D(20, 5));
-            graph.getVertex("v6").setPosition(Vertex.Position.new2D(5, 0));
-            graph.getVertex("v7").setPosition(Vertex.Position.new2D(15, 0));
+            graph.setVertexPosition(v2, VertexPosition.new2D(1500, 1000));
+            graph.setVertexPosition(v3, VertexPosition.new2D(0, 5));
+            graph.setVertexPosition(v4, VertexPosition.new2D(10, 10));
+            graph.setVertexPosition(v5, VertexPosition.new2D(20, 5));
+            graph.setVertexPosition(v6, VertexPosition.new2D(5, 0));
+            graph.setVertexPosition(v7, VertexPosition.new2D(15, 0));
         }
         return graph;
     }
 
     static Graph newBasicGraph() {
         return new Graph().
-                addEdge("1", "2").
-                addEdge("2", "3").
-                addEdge("2", "4").
-                addEdge("2", "5").
-                addEdge("5", "6").
-                addEdge("6", "7").
-                addEdge("5", "7").
-                addEdge("7", "8").
-                addEdge("8", "9").
-                addEdge("9", "10").
-                addEdge("0", "10").
-                addEdge("00", "10").
-                addEdge("000", "10");
+                addEdge(k1, k2).
+                addEdge(k2, k3).
+                addEdge(k2, k4).
+                addEdge(k2, k5).
+                addEdge(k5, k6).
+                addEdge(k6, k7).
+                addEdge(k5, k7).
+                addEdge(k7, k8).
+                addEdge(k8, k9).
+                addEdge(k9, k10).
+                addEdge(k0, k10).
+                addEdge(k00, k10).
+                addEdge(k000, k10);
     }
 }

@@ -10,8 +10,8 @@ public class VertexPositionTest {
 
     static final double DELTA = 0.00000000001D;
     static final double EARTH_RADIUS = 6371;
-    static final Vertex.Position POS1 = Vertex.Position.newEarthGeographic(1.9483572D, 48.7931459D);
-    static final Vertex.Position POS2 = Vertex.Position.newEarthGeographic(2.2459745D, 48.827167D);
+    static final VertexPosition POS1 = VertexPosition.newEarthGeographic(1.9483572D, 48.7931459D);
+    static final VertexPosition POS2 = VertexPosition.newEarthGeographic(2.2459745D, 48.827167D);
 
     public double getDistanceBetween(double lat1, double lon1, double lat2, double lon2) {
         double dLat = Math.toRadians(lat2 - lat1);

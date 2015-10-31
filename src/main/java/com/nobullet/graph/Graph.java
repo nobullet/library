@@ -1,13 +1,16 @@
 package com.nobullet.graph;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
@@ -19,11 +22,14 @@ public class Graph implements Cloneable {
     static final BiFunction<Vertex, Vertex, Double> DIJKSTRA_HEURISTIC = (Vertex next, Vertex goal) -> 0.0D;
     static final BiFunction<Vertex, Vertex, Double> A_STAR_HEURISTIC
             = (Vertex next, Vertex goal) -> next.distanceTo(goal).orElse(0.0D);
-    static final Vertex NOWHERE = new Vertex("__NOWHERE__");
+    static final Vertex NOWHERE = new Vertex(Key.of("__NOWHERE__" + UUID.randomUUID().toString()));
 
-    final Map<String, Vertex> vertices;
-    final Map<String, Vertex> verticesUnmodifiable;
+    final Map<Key, Vertex> vertices;
+    final Map<Key, Vertex> verticesUnmodifiable;
 
+    /**
+     * Constructs empty graph.
+     */
     public Graph() {
         this.vertices = new HashMap<>();
         this.verticesUnmodifiable = Collections.unmodifiableMap(this.vertices);
@@ -36,7 +42,7 @@ public class Graph implements Cloneable {
      */
     public Graph(Graph source) {
         this();
-        for (Map.Entry<String, Vertex> graphEntry : source.vertices.entrySet()) {
+        for (Map.Entry<Key, Vertex> graphEntry : source.vertices.entrySet()) {
             this.vertices.put(graphEntry.getKey(), new Vertex(graphEntry.getValue()));
         }
         for (Vertex sourceVertex : source.vertices.values()) {
@@ -50,88 +56,214 @@ public class Graph implements Cloneable {
         }
     }
 
-    public Collection<Vertex> getVertices() {
-        return this.verticesUnmodifiable.values();
+    /**
+     * Returns set of vertices in graph.
+     *
+     * @return Set of vertices in graph.
+     */
+    public Set<Key> getVertices() {
+        return this.verticesUnmodifiable.keySet();
     }
 
-    public Vertex getVertex(String key) {
-        return this.vertices.get(key);
+    /**
+     * Traverses all edges from current graph.
+     *
+     * @param visitor Visitor to be notified about graph visit.
+     * @return Current graph.
+     */
+    public Graph traverseEdges(EdgeVisitor visitor) {
+        traverseEdges(edge
+                -> visitor.visit(edge.getFrom().getKey(), edge.getTo().getKey(), edge.getCost(), edge.getData()));
+        return this;
     }
 
-    public Graph addVertex(String key) {
+    /**
+     * Adds vertex by key. Silently updates data if there is a vertex for given key.
+     *
+     * @param key Vertex key to add.
+     * @return Current graph.
+     */
+    public Graph addVertex(Key key) {
         Vertex vertex = this.vertices.get(key);
-        if (vertex != null) {
-            return this;
+        if (vertex == null) {
+            vertex = new Vertex(key);
+            this.vertices.put(key, vertex);
         }
-        vertex = new Vertex(key);
-        this.vertices.put(key, vertex);
         return this;
     }
 
-    public Graph removeVertex(String key) {
-        return removeVertex(this.vertices.get(key));
-    }
-
-    public Graph removeVertex(Vertex v) {
-        if (v == null) {
-            throw new NullPointerException("Vertex expected.");
+    /**
+     * Adds vertex by key. Silently updates data if there is a vertex for given key.
+     *
+     * @param key Vertex key to add.
+     * @param data Vertex data.
+     * @return Current graph.
+     */
+    public Graph addVertex(Key key, Object data) {
+        Vertex vertex = this.vertices.get(key);
+        if (vertex == null) {
+            vertex = new Vertex(key, data);
+            this.vertices.put(key, vertex);
+        } else {
+            vertex.setData(data);
         }
-        for (Vertex other : vertices.values()) {
-            if (other.hasEdge(v)) {
-                other.removeEdgeTo(v);
-            }
-        }
-        v.clear();
-        this.vertices.remove(v.getKey());
         return this;
     }
 
-    private void addEdgeInternal(String fromKey, String toKey, double cost, Object data) {
-        if (fromKey.equals(toKey)) {
-            throw new IllegalStateException("Can't add cycle edge for: " + fromKey);
+    /**
+     * Adds vertex by key. Silently updates data and position if there is a vertex for given key.
+     *
+     * @param key Vertex key to add.
+     * @param data Vertex data.
+     * @param position Vertex position.
+     * @return Current graph.
+     */
+    public Graph addVertex(Key key, Object data, VertexPosition position) {
+        Vertex vertex = this.vertices.get(key);
+        if (vertex == null) {
+            vertex = new Vertex(key, position, data);
+            this.vertices.put(key, vertex);
+        } else {
+            vertex.setPosition(position);
+            vertex.setData(data);
         }
-        Vertex from = this.vertices.get(fromKey);
-        Vertex to = this.vertices.get(toKey);
-        checkFromTo(fromKey, toKey, from, to);
-        from.addEdge(to, cost, data);
-    }
-
-    public Graph addEdge(String fromKey, String toKey) {
-        addEdge(fromKey, toKey, 1.0D);
         return this;
     }
 
-    public Graph addEdge(String fromKey, String toKey, double cost) {
-        addVertex(fromKey);
-        addVertex(toKey);
-        addEdgeInternal(fromKey, toKey, cost, null);
+    /**
+     * Removes vertex by key. Silently returns if there is no vertex for given key.
+     *
+     * @param key Vertex key to remove.
+     * @return Current graph.
+     */
+    public Graph removeVertex(Key key) {
+        return removeVertexInternal(this.vertices.get(key));
+    }
+
+    /**
+     * Checks if the given vertex belongs to graph.
+     *
+     * @param vertexKey Vertex key.
+     * @return Whether the given vertex belongs to graph.
+     */
+    public boolean hasVertex(Key vertexKey) {
+        return vertices.containsKey(vertexKey);
+    }
+
+    /**
+     * Returns optional with vertex position.
+     *
+     * @param vertexKey Vertex key.
+     * @return Optional with vertex position.
+     */
+    public Optional<VertexPosition> getVertexPosition(Key vertexKey) {
+        Vertex from = this.vertices.get(vertexKey);
+        return from != null ? from.getPosition() : Optional.empty();
+    }
+
+    /**
+     * Sets vertex position.
+     *
+     * @param vertexKey Vertex key.
+     * @param position Position.
+     * @return Current graph.
+     */
+    public Graph setVertexPosition(Key vertexKey, VertexPosition position) {
+        getVertex(vertexKey).setPosition(position);
         return this;
     }
 
-    public boolean hasEdge(String fromKey, String toKey) {
+    /**
+     * Gets vertex data. Ï
+     *
+     * @param vertexKey Vertex key.
+     * @return Optional data.
+     */
+    public Optional<Object> getVertexData(Key vertexKey) {
+        Vertex from = this.vertices.get(vertexKey);
+        return from != null ? from.getData() : Optional.empty();
+    }
+
+    /**
+     * Sets vertex data.
+     *
+     * @param vertexKey Vertex key.
+     * @param data Data to set.
+     * @return Current graph.
+     */
+    public Graph setVertexData(Key vertexKey, Object data) {
+        getVertex(vertexKey).setData(data);
+        return this;
+    }
+
+    /**
+     * Checks if the graph has edge from vertex defined by fromKey to vertex defined by toKey.
+     *
+     * @param fromKey From key.
+     * @param toKey To key.
+     * @return Whether the graph has edge from vertex defined by fromKey to vertex defined by toKey.
+     */
+    public boolean hasEdge(Key fromKey, Key toKey) {
         Vertex from = this.vertices.get(fromKey);
         Vertex to = this.vertices.get(toKey);
         return from != null && to != null && from.hasEdge(to);
     }
 
-    public Edge getEdge(String fromKey, String toKey) {
-        Vertex from = getVertex(fromKey);
-        Vertex to = getVertex(toKey);
-        checkFromTo(fromKey, toKey, from, to);
-        return from.getEdge(to);
+    public Graph addEdge(Key fromKey, Key toKey) {
+        return addEdge(fromKey, toKey, 1.0D, null);
     }
 
-    public Edge getEdge(Vertex from, Vertex to) {
-        return from.getEdge(to);
+    public Graph addEdge(Key fromKey, Key toKey, double cost) {
+        return addEdge(fromKey, toKey, cost, null);
     }
 
-    public Graph removeEdge(String fromKey, String toKey) {
-        return removeEdge(getVertex(fromKey), getVertex(toKey));
-    }
-
-    public Graph removeEdge(Vertex v1, Vertex v2) {
-        v1.removeEdgeTo(v2);
+    public Graph addEdge(Key fromKey, Key toKey, double cost, Object data) {
+        addVertex(fromKey);
+        addVertex(toKey);
+        addEdgeInternal(fromKey, toKey, cost, data);
         return this;
+    }
+
+    public double getEdgeCost(Key fromKey, Key toKey) {
+        return getEdge(fromKey, toKey).getCost();
+    }
+
+    public Graph setEdgeCost(Key fromKey, Key toKey, double cost) {
+        getEdge(fromKey, toKey).setCost(cost);
+        return this;
+    }
+
+    public Optional<Object> getEdgeData(Key fromKey, Key toKey) {
+        Vertex from = this.vertices.get(fromKey);
+        Vertex to = this.vertices.get(toKey);
+        return from != null && to != null && from.hasEdge(to) ? from.getEdge(to).getData() : Optional.empty();
+    }
+
+    public Graph setEdgeData(Key fromKey, Key toKey, Object data) {
+        getEdge(fromKey, toKey).setData(data);
+        return this;
+    }
+
+    public Graph removeEdge(Key fromKey, Key toKey) {
+        if (fromKey.equals(toKey)) {
+            return this;
+        }
+        Vertex from = this.vertices.get(fromKey);
+        Vertex to = this.vertices.get(toKey);
+        if (from != null && to != null) {
+            from.removeEdgeTo(to);
+        }
+        return this;
+    }
+
+    public void clear() {
+        vertices.values().stream().forEach(vertex -> vertex.clear());
+        vertices.clear();
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return new Graph(this);
     }
 
     /**
@@ -140,11 +272,11 @@ public class Graph implements Cloneable {
      * @param visitor Visitor to accept the vertices.
      * @throws com.nobullet.graph.Graph.CycleException If a cycle found.
      */
-    public void topologicalSort(GraphVisitor visitor) throws CycleException {
+    public void topologicalSort(VertexVisitor visitor) throws CycleException {
         Map<Vertex, MutableLong> indegrees = new HashMap<>();
         // Calculate ingoing degrees for each vertex. Compexity: O(|V| + |E|).
         // Result is a map of indegrees (null instead of counter means 0).
-        for (Vertex vertex : getVertices()) {
+        for (Vertex vertex : vertices.values()) {
             for (Edge edge : vertex.getOutgoingEdges()) {
                 Vertex to = edge.getTo();
                 MutableLong indegreeCounter = indegrees.get(to);
@@ -158,7 +290,7 @@ public class Graph implements Cloneable {
 
         Queue<Vertex> queue = new LinkedList<>();
         // Finds all vertices with indegree of 0 and puts them into the queue. Complexicity: O(|V|).
-        for (Vertex vertex : getVertices()) {
+        for (Vertex vertex : vertices.values()) {
             if (!indegrees.containsKey(vertex)) {
                 queue.add(vertex);
             }
@@ -168,7 +300,7 @@ public class Graph implements Cloneable {
         // if it's counter is 0. Complexity is O(|V| + |E|).
         while (!queue.isEmpty()) {
             Vertex vertex = queue.remove();
-            visitor.visit(vertex, counter++);
+            visitor.visit(vertex.getKey(), counter++);
             for (Vertex adjacent : vertex.getAdjacentVertices()) {
                 MutableLong adjacentCounter = indegrees.get(adjacent);
                 if (adjacentCounter.decrementAndGet() == 0) {
@@ -186,65 +318,50 @@ public class Graph implements Cloneable {
     /**
      * A-star shortest path algorithm.
      *
-     * @param source Source vertex.
-     * @param target Target vertex.
+     * @param sourceKey Source vertex key.
+     * @param targetKey Target vertex key.
      * @return List of vertices that create the path.
      */
-    public List<Vertex> shortestPathAStar(Vertex source, Vertex target) {
-        try {
-            return pathTemplate(source, target, A_STAR_HEURISTIC, false);
-        } catch (CycleException ce) {
-            throw new IllegalStateException("Internal graph error: AStar must not throw CycleException.", ce);
-        }
+    public Path shortestPathAStar(Key sourceKey, Key targetKey) {
+        return priorityFirstSearchInternal(sourceKey, targetKey, A_STAR_HEURISTIC);
     }
 
     /**
      * Dijkstra's shortest path algorithm.
      *
-     * @param source Source vertex.
-     * @param target Target vertex.
+     * @param sourceKey Source vertex key.
+     * @param targetKey Target vertex key.
      * @return List of vertices that create the path.
      */
-    public List<Vertex> shortestPathDijkstra(Vertex source, Vertex target) {
-        try {
-            return pathTemplate(source, target, DIJKSTRA_HEURISTIC, false);
-        } catch (CycleException ce) {
-            throw new IllegalStateException("Internal graph error: Dijkstra must not throw CycleException.", ce);
-        }
+    public Path shortestPathDijkstra(Key sourceKey, Key targetKey) {
+        return priorityFirstSearchInternal(sourceKey, targetKey, DIJKSTRA_HEURISTIC);
     }
 
     /**
-     * Dijkstra's longest path algorithm.
+     * Template method for path algorithms.
      *
-     * @param source Source vertex.
-     * @param target Target vertex.
+     * @param sourceKey Source vertex key.
+     * @param targetKey Target vertex key.
+     * @param heuristic Heuristic function which accepts two keys and returns heuristic value for this pair.
      * @return List of vertices that create the path.
-     * @throws CycleException When cycle found.
      */
-    public List<Vertex> longestPathDijkstra(Vertex source, Vertex target) throws CycleException {
-        return pathTemplate(source, target, DIJKSTRA_HEURISTIC, true);
+    public Path priorityFirstSearch(Key sourceKey, Key targetKey, BiFunction<Key, Key, Double> heuristic) {
+        return priorityFirstSearchInternal(sourceKey, targetKey, (v1, v2) -> heuristic.apply(v1.getKey(), v2.getKey()));
     }
 
     /**
-     * Template for path algorithms.
+     * Template method for path algorithms.
      *
-     * @param source Source vertex.
-     * @param target Target vertex.
+     * @param sourceKey Source vertex key.
+     * @param targetKey Target vertex key.
      * @param heuristic Heuristic function.
-     * @param longest Whether to find longest or shortest path.
      * @return List of vertices that create the path.
-     * @throws CycleException When cycle found.
      */
-    public List<Vertex> pathTemplate(Vertex source, Vertex target,
-            BiFunction<Vertex, Vertex, Double> heuristic, boolean longest) throws CycleException {
-        checkVertex(source);
-        checkVertex(target);
+    private Path priorityFirstSearchInternal(Key sourceKey, Key targetKey, BiFunction<Vertex, Vertex, Double> heuristic) {
+        Vertex source = getVertex(sourceKey);
+        Vertex target = getVertex(targetKey);
 
-        MutableDouble allEdgesSum = new MutableDouble();
-        if (longest) {
-            traverseAllEdges(e -> allEdgesSum.addAndGet(e.getCost()));
-        }
-
+        VertexWithPriority frontierVertex;
         PriorityQueue<VertexWithPriority> frontier = new PriorityQueue<>();
         frontier.add(new VertexWithPriority(source, 0.0D));
 
@@ -255,9 +372,11 @@ public class Graph implements Cloneable {
         cameFrom.put(source, NOWHERE);
 
         while (!frontier.isEmpty()) {
-            Vertex current = frontier.poll().getVertex();
+            frontierVertex = frontier.poll();
+            Vertex current = frontierVertex.getVertex();
+            frontierVertex.clear();
             // Early exit for shortest paths.
-            if (!longest && current.equals(target)) {
+            if (current.equals(target)) {
                 break;
             }
             // For all the neighbors.
@@ -266,14 +385,10 @@ public class Graph implements Cloneable {
                 Vertex next = adjacentEdge.getTo();
                 // Cost to next = previously calculated cost of travel to current + cost of the edge to neighbor.
                 double newCost = costSoFar.get(current) + adjacentEdge.getCost();
-                if (longest && newCost > allEdgesSum.getValue()) {
-                    throw new CycleException("There is a cycle in the graph.");
-                }
                 // If neighbor has not been visited yet or 'new' cost to next is better, re-submit the neighbor to
                 // frontier with new priority (newCost + heuristic), so the newly or revisited vertex could 
                 // be reconsidered again.
-                if (!costSoFar.containsKey(next)
-                        || (longest ? newCost > costSoFar.get(next) : newCost < costSoFar.get(next))) {
+                if (!costSoFar.containsKey(next) || newCost < costSoFar.get(next)) {
                     // Remember the cost.
                     costSoFar.put(next, newCost);
                     // Remember the step.
@@ -282,37 +397,225 @@ public class Graph implements Cloneable {
                     // Add result of heuristic function invocation so vertices closer to target considered
                     // earlier.
                     double newPriority = newCost + heuristic.apply(target, next);
-                    if (longest) {
-                        newPriority *= -1.0D;
-                    }
                     frontier.offer(new VertexWithPriority(next, newPriority));
                 }
             }
         }
-
-        List<Vertex> path = null;
-        if (!cameFrom.containsKey(target)) {
-            return Collections.emptyList();
-        } else {
-            // Reconstruct the path.
-            path = new LinkedList<>();
-            Vertex current = target;
-            while (cameFrom.containsKey(current)) {
-                path.add(current);
-                current = cameFrom.get(current);
-            }
-            Collections.reverse(path);
-        }
+        Path path = reconstructByCameFrom(source, target, cameFrom);
         // Clean up.
+        while (!frontier.isEmpty()) {
+            frontier.poll().clear();
+        }
+        frontier.clear();
         cameFrom.clear();
         costSoFar.clear();
-        frontier.clear();
         return path;
     }
 
-    public void maximumFlow(Vertex source, Vertex sink) {
+    public Path depthFirstSearch(Key sourceKey, Key targetKey) {
+        return unweightedFirstSearch(sourceKey, targetKey, true);
+    }
+
+    public Path breadthFirstSearch(Key sourceKey, Key targetKey) {
+        return unweightedFirstSearch(sourceKey, targetKey, false);
+    }
+
+    public Path unweightedFirstSearch(Key sourceKey, Key targetKey, boolean depthFirst) {
+        Vertex source = getVertex(sourceKey);
+        Vertex target = getVertex(targetKey);
+
+        Deque<Vertex> frontier = new LinkedList<>();
+        frontier.add(source);
+
+        Map<Vertex, Double> costSoFar = new HashMap<>();
+        costSoFar.put(source, 0.0D);
+
+        Map<Vertex, Vertex> cameFrom = new HashMap<>();
+        cameFrom.put(source, NOWHERE);
+
+        while (!frontier.isEmpty()) {
+            Vertex current = depthFirst ? frontier.removeLast() : frontier.removeFirst();
+
+            if (current.equals(target)) {
+                break;
+            }
+
+            for (Edge outgoingEdge : current.getOutgoingEdges()) {
+                Vertex next = outgoingEdge.getTo();
+                if (!cameFrom.containsKey(next)) {
+                    cameFrom.put(next, current);
+                    costSoFar.put(next, costSoFar.get(current) + outgoingEdge.getCost());
+                }
+            }
+        }
+
+        Path path = reconstructByCameFrom(source, target, cameFrom);
+        // Clean up.
+        while (!frontier.isEmpty()) {
+            frontier.poll().clear();
+        }
+        frontier.clear();
+        cameFrom.clear();
+        costSoFar.clear();
+        return path;
+    }
+
+    /**
+     * Builds maximum flow Graph from given graph. Returns empty optional if there is no flow or sink is not reachable.
+     *
+     * @param sourceKey Source key to start from.
+     * @param sinkKey Sink key to finish.
+     * @return Optional of flow graph.
+     * @throws NegativeEdgeCostException When graph has negative cost edge.
+     */
+    public Optional<Graph> maximumFlow(Key sourceKey, Key sinkKey) throws NegativeEdgeCostException {
+        if (!hasVertex(sourceKey) || !hasVertex(sinkKey)) {
+            return Optional.empty();
+        }
         Graph flow = new Graph();
         Graph residual = new Graph(this);
+        Vertex source = residual.getVertex(sourceKey);
+        Vertex sink = residual.getVertex(sinkKey);
+        List<Edge> residualEdges = new LinkedList<>();
+        Path path;
+        do {
+            path = residual.breadthFirstSearch(sourceKey, sinkKey);
+            Vertex previous = null;
+            Vertex current = null;
+            double minEdgeLength = 0.0D;
+            // Find edge with minimal cost in path and collect edges in list.
+            for (Key currentKey : path.getPath()) {
+                if (previous != null) {
+                    current = residual.getVertex(currentKey);
+                    Edge edgeInPath = previous.getEdge(current);
+                    if (edgeInPath.getCost() < 0.0D) {
+                        throw new NegativeEdgeCostException(String.format("%s->%s edge has negative cost.",
+                                previous.getKey(), currentKey));
+                    }
+                    residualEdges.add(edgeInPath);
+                    if (minEdgeLength == 0.0D || edgeInPath.getCost() < minEdgeLength) {
+                        minEdgeLength = edgeInPath.getCost();
+                    }
+                }
+                previous = current;
+            }
+            for (Edge residualEdge : residualEdges) {
+                Vertex residualFrom = residualEdge.getFrom();
+                Vertex residualTo = residualEdge.getTo();
+                double newCost = residualEdge.getCost() - minEdgeLength;
+                if (newCost > 0.0D) {
+                    // Subtract flow.
+                    residualEdge.setCost(newCost);
+                } else {
+                    // Remove edge.
+                    residualFrom.removeEdgeTo(residualTo);
+                }
+                // Get reverse edge.
+                Edge reverseEdge = residualTo.getEdge(residualFrom);
+                if (reverseEdge == null) {
+                    // Create new if it doesn't exist.
+                    residual.addEdge(residualTo.getKey(), residualFrom.getKey(), minEdgeLength);
+                } else {
+                    // Or update cost.
+                    reverseEdge.setCost(reverseEdge.getCost() + minEdgeLength);
+                }
+                // Update flow graph.
+                Edge flowEdge = flow.getEdge(residualFrom.getKey(), residualTo.getKey());
+                if (flowEdge == null) {
+                    // Add flow edge.
+                    flow.addEdge(residualFrom.getKey(), residualTo.getKey(), minEdgeLength);
+                } else {
+                    // Or update cost.
+                    flowEdge.setCost(flowEdge.getCost() + minEdgeLength);
+                }
+            }
+            residualEdges.clear();
+        } while (!path.isEmpty());
+
+        if (!flow.hasVertex(sink)) {
+            flow.clear();
+            residual.clear();
+            return Optional.empty();
+        }
+        flow.clear();
+        residual.clear();
+        return Optional.of(flow);
+    }
+
+    /**
+     * Reconstructs the path by given arguments.
+     *
+     * @param source Source.
+     * @param target Targe vertex.
+     * @param cameFrom Came from map.
+     * @return Path to target.
+     */
+    private Path reconstructByCameFrom(Vertex source, Vertex target, Map<Vertex, Vertex> cameFrom) {
+        if (!cameFrom.containsKey(target)) {
+            return new Path(source.getKey(), target.getKey(), Collections.emptyList(), 0.0D);
+        }
+        // Reconstruct the path.
+        double cost = 0.0D;
+        List<Key> path = new LinkedList<>();
+        Vertex current = target;
+        Vertex previous = null;
+        while (cameFrom.containsKey(current)) {
+            path.add(current.getKey());
+            previous = cameFrom.get(current);
+            if (previous != null && previous != NOWHERE) {
+                cost += previous.getEdge(current).getCost();
+            }
+            current = previous;
+        }
+        Collections.reverse(path);
+        return new Path(source.getKey(), target.getKey(), path, cost);
+    }
+
+    /**
+     * Returns vertex by key. Throws {@link NullPointerException} if there is no vertex for key.
+     *
+     * @param key Vertex key.
+     * @return Vertex for key or {@link NullPointerException} if there is no vertex for key.
+     */
+    private Vertex getVertex(Key key) {
+        Vertex vertex = this.vertices.get(key);
+        if (vertex == null) {
+            throw new NullPointerException(String.format("No vertex for key %s.", key));
+        }
+        return vertex;
+    }
+
+    private Edge getEdge(Key fromKey, Key toKey) {
+        Edge existingEdge = getVertex(fromKey).getEdge(getVertex(toKey));
+        if (existingEdge == null) {
+            throw new NullPointerException(String.format("No edge found for: %s -> %s .", fromKey, toKey));
+        }
+        return existingEdge;
+    }
+
+    private Graph addEdgeInternal(Key fromKey, Key toKey, double cost, Object data) {
+        if (fromKey.equals(toKey)) {
+            throw new IllegalStateException("Can't add cycle edge for: " + fromKey);
+        }
+        Vertex from = this.vertices.get(fromKey);
+        Vertex to = this.vertices.get(toKey);
+        checkFromTo(fromKey, toKey, from, to);
+        from.addEdge(to, cost, data);
+        return this;
+    }
+
+    private Graph removeVertexInternal(Vertex v) {
+        if (v == null) {
+            return this;
+        }
+        for (Vertex other : vertices.values()) {
+            if (other.hasEdge(v)) {
+                other.removeEdgeTo(v);
+            }
+        }
+        v.clear();
+        this.vertices.remove(v.getKey());
+        return this;
     }
 
     /**
@@ -321,7 +624,7 @@ public class Graph implements Cloneable {
      * @param vertex Vertex to check.
      * @throws IllegalArgumentException If vertex is not in graph.
      */
-    public void checkVertex(Vertex vertex) {
+    private void checkVertex(Vertex vertex) {
         if (!hasVertex(vertex)) {
             throw new IllegalArgumentException(
                     String.format("Given vertext (%s) doesn't belong to graph.", vertex));
@@ -331,29 +634,19 @@ public class Graph implements Cloneable {
     /**
      * Checks if the given vertex belongs to graph.
      *
-     * @param vertexKey Vertex key.
-     * @return Whether the given vertex belongs to graph.
-     */
-    public boolean hasVertex(String vertexKey) {
-        return verticesUnmodifiable.containsKey(vertexKey);
-    }
-
-    /**
-     * Checks if the given vertex belongs to graph.
-     *
      * @param vertex Vertex.
      * @return Whether the given vertex belongs to graph.
      */
-    public boolean hasVertex(Vertex vertex) {
-        return verticesUnmodifiable.containsKey(vertex.getKey());
+    private boolean hasVertex(Vertex vertex) {
+        return vertices.containsKey(vertex.getKey());
     }
 
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        return new Graph(this);
-    }
-
-    private void traverseAllEdges(Consumer<Edge> consumer) {
+    /**
+     * Traverses all edges in graph calling {@link Consumer#accept(java.lang.Object)} on each edge.
+     *
+     * @param consumer Consumer for an edge.
+     */
+    private void traverseEdges(Consumer<Edge> consumer) {
         for (Vertex vertex : vertices.values()) {
             for (Edge edge : vertex.getOutgoingEdges()) {
                 consumer.accept(edge);
@@ -361,7 +654,15 @@ public class Graph implements Cloneable {
         }
     }
 
-    private void checkFromTo(String fromKey, String toKey, Vertex from, Vertex to) {
+    /**
+     * Check whether given vertices with correspondent keys exist.
+     *
+     * @param fromKey From key.
+     * @param toKey To key.
+     * @param from From vertex.
+     * @param to To Vertex.
+     */
+    private void checkFromTo(Key fromKey, Key toKey, Vertex from, Vertex to) {
         if (from == null) {
             throw new IllegalArgumentException("Can't find vertex for key: " + fromKey);
         }
@@ -371,51 +672,33 @@ public class Graph implements Cloneable {
     }
 
     /**
-     * Vertex with external priority. For shortest path algorithms like Dijkstra or AStar.
+     * Vertex visitor.
      */
-    static class VertexWithPriority implements Comparable<VertexWithPriority> {
-
-        private final Vertex vertext;
-        private final double priority;
+    public interface VertexVisitor {
 
         /**
-         * Constructs prioritized vertex with given arguments.
+         * Invoked when algorithms visit a vertex in graph.
          *
-         * @param vertex Vertex.
-         * @param priority Priority.
+         * @param vertexKey Vertex key.
+         * @param order Topological order of the vertex when possible.
          */
-        public VertexWithPriority(Vertex vertex, double priority) {
-            this.vertext = vertex;
-            this.priority = priority;
-        }
+        void visit(Key vertexKey, int order);
+    }
+
+    /**
+     * Edge visitor.
+     */
+    public interface EdgeVisitor {
 
         /**
-         * Vertex.
+         * Invoked when algorithms visit an edge in graph.
          *
-         * @return Vertex.
+         * @param fromKey Edge from.
+         * @param toKey Edge to.
+         * @param cost Cost of the edge.
+         * @param data Optional data from edge.
          */
-        public Vertex getVertex() {
-            return vertext;
-        }
-
-        /**
-         * Priority.
-         *
-         * @return Priority.
-         */
-        public double getPriority() {
-            return priority;
-        }
-
-        @Override
-        public int compareTo(VertexWithPriority o) {
-            return Double.compare(priority, o.priority);
-        }
-
-        @Override
-        public String toString() {
-            return "VP{vertext=" + vertext + ", priority=" + priority + '}';
-        }
+        void visit(Key fromKey, Key toKey, double cost, Optional<Object> data);
     }
 
     /**
@@ -428,6 +711,71 @@ public class Graph implements Cloneable {
 
         public CycleException(String message) {
             super(message);
+        }
+    }
+
+    /**
+     * Negative edge cost exception.
+     */
+    public static class NegativeEdgeCostException extends Exception {
+
+        public NegativeEdgeCostException() {
+        }
+
+        public NegativeEdgeCostException(String message) {
+            super(message);
+        }
+    }
+
+    /**
+     * Vertex with external priority. For shortest path algorithms like Dijkstra or AStar.
+     */
+    private static class VertexWithPriority implements Comparable<VertexWithPriority> {
+
+        Vertex vertex;
+        double priority;
+
+        /**
+         * Constructs prioritized vertex with given arguments.
+         *
+         * @param vertex Vertex.
+         * @param priority Priority.
+         */
+        public VertexWithPriority(Vertex vertex, double priority) {
+            this.vertex = vertex;
+            this.priority = priority;
+        }
+
+        /**
+         * Vertex.
+         *
+         * @return Vertex.
+         */
+        public Vertex getVertex() {
+            return vertex;
+        }
+
+        /**
+         * Priority.
+         *
+         * @return Priority.
+         */
+        public double getPriority() {
+            return priority;
+        }
+
+        public void clear() {
+            this.vertex = null;
+        }
+
+        @Override
+        public int compareTo(VertexWithPriority o) {
+            return Double.compare(priority, o.priority);
+        }
+
+        @Override
+        public String toString() {
+            return "VP{vertex=" + vertex + ", priority=" + priority + '}';
         }
     }
 

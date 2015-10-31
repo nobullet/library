@@ -6,55 +6,54 @@ import java.util.Optional;
 /**
  * Edge between two vertices.
  */
-public class Edge {
+class Edge {
 
     Vertex from;
     Vertex to;
     double cost;
     Optional<Object> data;
 
-    public Edge(Vertex from, Vertex to) {
+    Edge(Vertex from, Vertex to) {
         this(from, to, 1.0D, null);
     }
 
-    public Edge(Vertex from, Vertex to, double cost) {
+    Edge(Vertex from, Vertex to, double cost) {
         this(from, to, cost, null);
     }
 
-    public Edge(Vertex from, Vertex to, double cost, Object data) {
+    Edge(Vertex from, Vertex to, double cost, Object data) {
         this.from = from;
         this.to = to;
         this.cost = cost;
         this.data = Optional.ofNullable(data);
     }
 
-    public Vertex getFrom() {
+    Vertex getFrom() {
         return from;
     }
 
-    public Vertex getTo() {
+    Vertex getTo() {
         return to;
     }
 
-    public double getCost() {
+    double getCost() {
         return cost;
     }
 
-    public void setCost(double weight) {
+    void setCost(double weight) {
         this.cost = weight;
     }
 
-    public Optional<Object> getData() {
+    Optional<Object> getData() {
         return data;
     }
 
-    public void setData(Object data) {
+    void setData(Object data) {
         this.data = Optional.ofNullable(data);
     }
     
-    public void clear() {
+    void clear() {
         this.from = null;
-        this.to = null;
         this.to = null;
         this.data = null;
     }
