@@ -2,6 +2,7 @@ package com.nobullet.graph;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
@@ -37,8 +38,29 @@ public class GraphTest {
     static final Key v5 = Key.of("v5");
     static final Key v6 = Key.of("v6");
     static final Key v7 = Key.of("v7");
-    
-    
+
+    @Test
+    public void testEquals() {
+        assertEquals(newBasicGraph(), newBasicGraph());
+        assertNotEquals("Graphs must be different. Edge 7 -> 8 is lost.",
+                newBasicGraph().removeVertex(k7).addVertex(k7), newBasicGraph());
+
+        assertEquals(newGraphFromBook(false), newGraphFromBook(false));
+        assertEquals(newGraphFromBook(true), newGraphFromBook(true));
+        assertEquals(newGraphFromBook(true), newGraphFromBook(false));
+    }
+
+    @Test
+    public void testHashCode() {
+        assertEquals(newBasicGraph().hashCode(), newBasicGraph().hashCode());
+        assertNotEquals("Graphs hash codes must be different. Edge 7 -> 8 is lost.",
+                newBasicGraph().removeVertex(k7).addVertex(k7).hashCode(), newBasicGraph().hashCode());
+
+        assertEquals(newGraphFromBook(false).hashCode(), newGraphFromBook(false).hashCode());
+        assertEquals(newGraphFromBook(true).hashCode(), newGraphFromBook(true).hashCode());
+        assertEquals(newGraphFromBook(true).hashCode(), newGraphFromBook(false).hashCode());
+    }
+
     @Test
     public void testGraph() {
         Graph graph = newBasicGraph();

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Graph vertex. Not thread safe.
@@ -15,7 +16,7 @@ class Vertex implements Cloneable {
 
     Key key;
     Map<Vertex, Edge> adjacent;
-    Map<Vertex, Edge> adjacentUnmodifieble;
+    Map<Vertex, Edge> adjacentUnmodifiable;
     Optional<Object> data;
     Optional<VertexPosition> position;
 
@@ -68,13 +69,13 @@ class Vertex implements Cloneable {
     Vertex(Key key, VertexPosition position, Object data, Map<Vertex, Edge> adjacent) {
         this.key = key;
         this.adjacent = new HashMap<>(adjacent);
-        this.adjacentUnmodifieble = Collections.unmodifiableMap(this.adjacent);
+        this.adjacentUnmodifiable = Collections.unmodifiableMap(this.adjacent);
         this.position = Optional.ofNullable(position);
         this.data = Optional.ofNullable(data);
     }
 
     Collection<Edge> getOutgoingEdges() {
-        return adjacentUnmodifieble.values();
+        return adjacentUnmodifiable.values();
     }
 
     int getOutgoingEdgesNumber() {
@@ -82,9 +83,13 @@ class Vertex implements Cloneable {
     }
 
     Set<Vertex> getAdjacentVertices() {
-        return adjacentUnmodifieble.keySet();
+        return adjacentUnmodifiable.keySet();
     }
-
+    
+    Set<Key> getAdjacentVerticesKeys() {
+        return adjacentUnmodifiable.keySet().stream().map(vertex -> vertex.getKey()).collect(Collectors.toSet());
+    }
+    
     Vertex removeEdgeTo(Vertex to) {
         Edge existing = this.adjacent.get(to);
         if (existing != null) {

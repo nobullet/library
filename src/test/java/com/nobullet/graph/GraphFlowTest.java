@@ -1,8 +1,9 @@
 package com.nobullet.graph;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import com.nobullet.graph.Graph.MutableDouble;
 import java.util.Optional;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -16,18 +17,23 @@ public class GraphFlowTest {
     static final Key c = Key.of("c");
     static final Key d = Key.of("d");
     static final Key t = Key.of("t");
-    
+
     @Test
-    @Ignore
     public void testFlow() throws Graph.CycleException, Graph.NegativeEdgeCostException {
         Graph graph = newFromBook();
         Optional<Graph> flow = graph.maximumFlow(s, t);
         assertTrue("Has flow", flow.isPresent());
+        Graph flowGraph = flow.get();
+        assertEquals("Graphs are the samex.", newMaximalFlowForGraphFromBook(), flow.get());
+        MutableDouble flowCounter = new MutableDouble();
+        flowGraph.getAdjacentVertices(s).stream().forEach(key -> flowCounter.addAndGet(flowGraph.getEdgeCost(s, key)));
+        assertEquals("5.0 is expected flow.", 5.0D, flowCounter.getValue(), 0.000000000001D);
     }
-    
+
     /**
-     * Graph 
-     * @return 
+     * Graph graph from book.
+     *
+     * @return Graph from book.
      */
     static Graph newFromBook() {
         return new Graph()
@@ -37,6 +43,22 @@ public class GraphFlowTest {
                 .addEdge(a, d, 4.0D)
                 .addEdge(b, d, 2.0D)
                 .addEdge(a, c, 3.0D)
+                .addEdge(c, t, 2.0D)
+                .addEdge(d, t, 3.0D);
+    }
+
+    /**
+     * Maximal flow graph of the graph above.
+     *
+     * @return Maximal flow graph.
+     */
+    static Graph newMaximalFlowForGraphFromBook() {
+        return new Graph()
+                .addEdge(s, b, 2.0D)
+                .addEdge(s, a, 3.0D)
+                .addEdge(a, d, 1.0D)
+                .addEdge(b, d, 2.0D)
+                .addEdge(a, c, 2.0D)
                 .addEdge(c, t, 2.0D)
                 .addEdge(d, t, 3.0D);
     }

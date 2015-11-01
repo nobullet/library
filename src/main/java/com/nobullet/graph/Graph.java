@@ -3,9 +3,11 @@ package com.nobullet.graph;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Queue;
@@ -244,6 +246,13 @@ public class Graph implements Cloneable {
         return this;
     }
 
+    /**
+     * Removes edge between from and to vertices.
+     *
+     * @param fromKey From key.
+     * @param toKey To Key.
+     * @return Current graph.
+     */
     public Graph removeEdge(Key fromKey, Key toKey) {
         if (fromKey.equals(toKey)) {
             return this;
@@ -256,14 +265,14 @@ public class Graph implements Cloneable {
         return this;
     }
 
-    public void clear() {
-        vertices.values().stream().forEach(vertex -> vertex.clear());
-        vertices.clear();
-    }
-
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        return new Graph(this);
+    /**
+     * Returns keys of adjacent vertices to vertex defined by fromKey.
+     *
+     * @param fromKey From key.
+     * @return Set of adjacent vertices.
+     */
+    public Set<Key> getAdjacentVertices(Key fromKey) {
+        return getVertex(fromKey).getAdjacentVerticesKeys();
     }
 
     /**
@@ -309,6 +318,7 @@ public class Graph implements Cloneable {
                 }
             }
         }
+        indegrees.clear();
         if (counter != vertices.size()) {
             throw new CycleException("Graph has cycle: expected number of vertices is " + counter + " but graph has "
                     + vertices.size());
@@ -445,6 +455,7 @@ public class Graph implements Cloneable {
                 if (!cameFrom.containsKey(next)) {
                     cameFrom.put(next, current);
                     costSoFar.put(next, costSoFar.get(current) + outgoingEdge.getCost());
+                    frontier.addLast(next);
                 }
             }
         }
@@ -462,6 +473,7 @@ public class Graph implements Cloneable {
 
     /**
      * Builds maximum flow Graph from given graph. Returns empty optional if there is no flow or sink is not reachable.
+     * Uses Ford-Fulkerson/Edmonds–Karp maximal flow algorithm.
      *
      * @param sourceKey Source key to start from.
      * @param sinkKey Sink key to finish.
@@ -474,8 +486,6 @@ public class Graph implements Cloneable {
         }
         Graph flow = new Graph();
         Graph residual = new Graph(this);
-        Vertex source = residual.getVertex(sourceKey);
-        Vertex sink = residual.getVertex(sinkKey);
         List<Edge> residualEdges = new LinkedList<>();
         Path path;
         do {
@@ -485,8 +495,8 @@ public class Graph implements Cloneable {
             double minEdgeLength = 0.0D;
             // Find edge with minimal cost in path and collect edges in list.
             for (Key currentKey : path.getPath()) {
+                current = residual.getVertex(currentKey);
                 if (previous != null) {
-                    current = residual.getVertex(currentKey);
                     Edge edgeInPath = previous.getEdge(current);
                     if (edgeInPath.getCost() < 0.0D) {
                         throw new NegativeEdgeCostException(String.format("%s->%s edge has negative cost.",
@@ -520,26 +530,89 @@ public class Graph implements Cloneable {
                     reverseEdge.setCost(reverseEdge.getCost() + minEdgeLength);
                 }
                 // Update flow graph.
-                Edge flowEdge = flow.getEdge(residualFrom.getKey(), residualTo.getKey());
-                if (flowEdge == null) {
+                if (!flow.hasEdge(residualFrom.getKey(), residualTo.getKey())) {
                     // Add flow edge.
                     flow.addEdge(residualFrom.getKey(), residualTo.getKey(), minEdgeLength);
                 } else {
                     // Or update cost.
+                    Edge flowEdge = flow.getEdge(residualFrom.getKey(), residualTo.getKey());
                     flowEdge.setCost(flowEdge.getCost() + minEdgeLength);
                 }
             }
             residualEdges.clear();
         } while (!path.isEmpty());
-
-        if (!flow.hasVertex(sink)) {
+        if (!flow.hasVertex(sinkKey)) {
             flow.clear();
             residual.clear();
             return Optional.empty();
         }
-        flow.clear();
         residual.clear();
         return Optional.of(flow);
+    }
+
+    public void clear() {
+        vertices.values().stream().forEach(vertex -> vertex.clear());
+        vertices.clear();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("{");
+        traverseEdges(edge -> sb
+                .append(edge.getFrom().getKey())
+                .append("--(")
+                .append(edge.getCost())
+                .append(")-->")
+                .append(edge.getTo().getKey())
+                .append(",\n")
+        );
+        if (sb.length() > 2) {
+            sb.setLength(sb.length() - 2);
+        }
+        return sb.append("}").toString();
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return new Graph(this);
+    }
+
+    @Override
+    public int hashCode() {
+        MutableLong hashCode = new MutableLong(5);
+        hashCode.multiplyAndGet(23);
+        hashCode.addAndGet(Objects.hashCode(this.vertices.keySet()));
+        this.traverseEdges(edge -> {
+            hashCode.multiplyAndGet(23);
+            hashCode.addAndGet(edge.hashCode());
+        });
+        return hashCode.getIntegerValue();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Graph other = (Graph) obj;
+        Set<Key> thisKeys = this.vertices.keySet();
+        Set<Key> otherKeys = other.vertices.keySet();
+        // Check has same vertex keys.
+        if (otherKeys.size() != thisKeys.size() || !thisKeys.containsAll(otherKeys)) {
+            return false;
+        }
+        // Check edges.
+        Set<Edge> thisEdges = new HashSet<>((int) (thisKeys.size() * 1.5F));
+        Set<Edge> otherEdges = new HashSet<>((int) (thisKeys.size() * 1.5F));
+        this.traverseEdges(thisEdges::add);
+        other.traverseEdges(otherEdges::add);
+        boolean result = thisEdges.equals(otherEdges);
+        thisEdges.clear();
+        otherEdges.clear();
+        return result;
     }
 
     /**
@@ -616,29 +689,6 @@ public class Graph implements Cloneable {
         v.clear();
         this.vertices.remove(v.getKey());
         return this;
-    }
-
-    /**
-     * Checks if the given vertex belongs to graph.
-     *
-     * @param vertex Vertex to check.
-     * @throws IllegalArgumentException If vertex is not in graph.
-     */
-    private void checkVertex(Vertex vertex) {
-        if (!hasVertex(vertex)) {
-            throw new IllegalArgumentException(
-                    String.format("Given vertext (%s) doesn't belong to graph.", vertex));
-        }
-    }
-
-    /**
-     * Checks if the given vertex belongs to graph.
-     *
-     * @param vertex Vertex.
-     * @return Whether the given vertex belongs to graph.
-     */
-    private boolean hasVertex(Vertex vertex) {
-        return vertices.containsKey(vertex.getKey());
     }
 
     /**
@@ -782,7 +832,7 @@ public class Graph implements Cloneable {
     /**
      * Mutable long for internals (topological sort).
      */
-    private static class MutableLong {
+    static class MutableLong {
 
         private long value;
 
@@ -803,6 +853,10 @@ public class Graph implements Cloneable {
             return this;
         }
 
+        public int getIntegerValue() {
+            return Long.valueOf(value).intValue();
+        }
+
         public long incrementAndGet() {
             return ++this.value;
         }
@@ -813,6 +867,16 @@ public class Graph implements Cloneable {
 
         public long addAndGet(long other) {
             this.value += other;
+            return this.value;
+        }
+
+        public long multiplyAndGet(long other) {
+            this.value *= other;
+            return this.value;
+        }
+
+        public long divideAndGet(long other) {
+            this.value /= other;
             return this.value;
         }
 
@@ -830,7 +894,7 @@ public class Graph implements Cloneable {
     /**
      * Mutable double for internals (shortest/longest paths).
      */
-    private static class MutableDouble {
+    static class MutableDouble {
 
         private double value;
 
