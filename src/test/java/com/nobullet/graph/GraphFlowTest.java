@@ -31,7 +31,7 @@ public class GraphFlowTest {
     }
 
     /**
-     * Graph graph from book.
+     * Graph graph from book "Data Structures and Algorithm Analysis in Java", 2nd e., by Mark Allen Weiss, page 346.
      *
      * @return Graph from book.
      */

@@ -9,7 +9,6 @@ import java.util.Random;
 import java.util.logging.Logger;
 import org.junit.Test;
 
-
 /**
  * Tests for BenchmarksTest.
  */
@@ -100,7 +99,11 @@ public class BenchmarksTest {
 
         try {
             result = bm.benchmark("Square", () -> {
-                throw new IllegalArgumentException("Error");
+                // This resolves 'reference to benchmark is ambiguous' error for early JDK8 builds.
+                if (true) {
+                    throw new IllegalArgumentException("Error");
+                }
+                return 0;
             });
             fail("Exception is expected.");
         } catch (RuntimeException e) {
@@ -150,7 +153,7 @@ public class BenchmarksTest {
         assertAllLinesInBenchmarksOfASameLength(table, 44);
         assertFalse("Contains no skip lines (...).", table.contains("..."));
     }
-    
+
     @Test
     public void testMultipleBenchmark21Results() {
         Benchmarks benchmark = new Benchmarks(new TestTicker());
