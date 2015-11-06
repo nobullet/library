@@ -19,7 +19,19 @@ public class GraphFlowTest {
     static final Key t = Key.of("t");
 
     @Test
-    public void testFlow() throws Graph.CycleException, Graph.NegativeEdgeCostException {
+    public void testFlow() throws Graph.NegativeEdgeCostException {
+        Graph graph = newFromBook();
+        Optional<Graph> flow = graph.maximumFlow(s, t);
+        assertTrue("Has flow", flow.isPresent());
+        Graph flowGraph = flow.get();
+        assertEquals("Graphs are the samex.", newMaximalFlowForGraphFromBook(), flow.get());
+        MutableDouble flowCounter = new MutableDouble();
+        flowGraph.getAdjacentVertices(s).stream().forEach(key -> flowCounter.addAndGet(flowGraph.getEdgeCost(s, key)));
+        assertEquals("5.0 is expected flow.", 5.0D, flowCounter.getValue(), 0.000000000001D);
+    }
+    
+    @Test
+    public void testFlowWiki() throws Graph.NegativeEdgeCostException {
         Graph graph = newFromBook();
         Optional<Graph> flow = graph.maximumFlow(s, t);
         assertTrue("Has flow", flow.isPresent());

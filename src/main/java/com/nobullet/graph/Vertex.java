@@ -85,11 +85,11 @@ class Vertex implements Cloneable {
     Set<Vertex> getAdjacentVertices() {
         return adjacentUnmodifiable.keySet();
     }
-    
+
     Set<Key> getAdjacentVerticesKeys() {
         return adjacentUnmodifiable.keySet().stream().map(vertex -> vertex.getKey()).collect(Collectors.toSet());
     }
-    
+
     Vertex removeEdgeTo(Vertex to) {
         Edge existing = this.adjacent.get(to);
         if (existing != null) {
@@ -120,8 +120,9 @@ class Vertex implements Cloneable {
         if (edge == null) {
             edge = new Edge(this, to, cost, data);
             this.adjacent.put(to, edge);
+        } else {
+            edge.setCost(cost);
         }
-        edge.setCost(cost);
         return this;
     }
 

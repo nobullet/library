@@ -211,14 +211,38 @@ public class Graph implements Cloneable {
         return from != null && to != null && from.hasEdge(to);
     }
 
+    /**
+     * Adds edge between two vertices defined by keys of cost 1.0D.
+     *
+     * @param fromKey From vertex key.
+     * @param toKey To vertex key.
+     * @return Current graph.
+     */
     public Graph addEdge(Key fromKey, Key toKey) {
         return addEdge(fromKey, toKey, 1.0D, null);
     }
 
+    /**
+     * Adds edge between two vertices defined by keys of cost 1.0D.
+     *
+     * @param fromKey From vertex key.
+     * @param toKey To vertex key.
+     * @param cost Cost of the edge.
+     * @return Current graph.
+     */
     public Graph addEdge(Key fromKey, Key toKey, double cost) {
         return addEdge(fromKey, toKey, cost, null);
     }
 
+    /**
+     * Adds edge between two vertices defined by keys of cost 1.0D.
+     *
+     * @param fromKey From vertex key.
+     * @param toKey To vertex key.
+     * @param cost Cost of the edge.
+     * @param data Edge data.
+     * @return Current graph.
+     */
     public Graph addEdge(Key fromKey, Key toKey, double cost, Object data) {
         addVertex(fromKey);
         addVertex(toKey);
@@ -226,21 +250,55 @@ public class Graph implements Cloneable {
         return this;
     }
 
+    /**
+     * Returns edge cost.
+     *
+     * @param fromKey From key.
+     * @param toKey To key.
+     * @return Edge cost.
+     * @throws NullPointerException If there is no such edge.
+     */
     public double getEdgeCost(Key fromKey, Key toKey) {
         return getEdge(fromKey, toKey).getCost();
     }
 
+    /**
+     * Sets edge cost.
+     *
+     * @param fromKey From key.
+     * @param toKey To key.
+     * @param cost Edge cost.
+     * @return Current graph.
+     * @throws NullPointerException If there is no such edge.
+     */
     public Graph setEdgeCost(Key fromKey, Key toKey, double cost) {
         getEdge(fromKey, toKey).setCost(cost);
         return this;
     }
 
+    /**
+     * Returns edge data.
+     *
+     * @param fromKey From key.
+     * @param toKey To key.
+     * @return Edge data.
+     * @throws NullPointerException If there is no such edge.
+     */
     public Optional<Object> getEdgeData(Key fromKey, Key toKey) {
         Vertex from = this.vertices.get(fromKey);
         Vertex to = this.vertices.get(toKey);
         return from != null && to != null && from.hasEdge(to) ? from.getEdge(to).getData() : Optional.empty();
     }
 
+    /**
+     * Sets edge data.
+     *
+     * @param fromKey From key.
+     * @param toKey To key.
+     * @param data Edge data.
+     * @return Current graph.
+     * @throws NullPointerException If there is no such edge.
+     */
     public Graph setEdgeData(Key fromKey, Key toKey, Object data) {
         getEdge(fromKey, toKey).setData(data);
         return this;
@@ -422,15 +480,37 @@ public class Graph implements Cloneable {
         return path;
     }
 
+    /**
+     * Unweighted depth-first search in graph for path between two vertices.
+     *
+     * @param sourceKey Source vertex key.
+     * @param targetKey Target vertex key.
+     * @return List of vertices that create the path.
+     */
     public Path depthFirstSearch(Key sourceKey, Key targetKey) {
         return unweightedFirstSearch(sourceKey, targetKey, true);
     }
 
+    /**
+     * Unweighted breadth-first search in graph for path between two vertices.
+     *
+     * @param sourceKey Source vertex key.
+     * @param targetKey Target vertex key.
+     * @return List of vertices that create the path.
+     */
     public Path breadthFirstSearch(Key sourceKey, Key targetKey) {
         return unweightedFirstSearch(sourceKey, targetKey, false);
     }
 
-    public Path unweightedFirstSearch(Key sourceKey, Key targetKey, boolean depthFirst) {
+    /**
+     * Unweighted breadth/depth-first search in graph for path between two vertices.
+     *
+     * @param sourceKey Source vertex key.
+     * @param targetKey Target vertex key.
+     * @param depthFirst Whether it depth-first search (breadth-first otherwise).
+     * @return List of vertices that create the path.
+     */
+    private Path unweightedFirstSearch(Key sourceKey, Key targetKey, boolean depthFirst) {
         Vertex source = getVertex(sourceKey);
         Vertex target = getVertex(targetKey);
 
@@ -550,6 +630,9 @@ public class Graph implements Cloneable {
         return Optional.of(flow);
     }
 
+    /**
+     * Removes all edges and vertices from current graph.
+     */
     public void clear() {
         vertices.values().stream().forEach(vertex -> vertex.clear());
         vertices.clear();
@@ -658,6 +741,14 @@ public class Graph implements Cloneable {
         return vertex;
     }
 
+    /**
+     * Returns edge between two vertices.
+     *
+     * @param fromKey From key.
+     * @param toKey To key.
+     * @return Edge between two vertices.
+     * @throws NullPointerException If there is no such edge.
+     */
     private Edge getEdge(Key fromKey, Key toKey) {
         Edge existingEdge = getVertex(fromKey).getEdge(getVertex(toKey));
         if (existingEdge == null) {
@@ -666,6 +757,15 @@ public class Graph implements Cloneable {
         return existingEdge;
     }
 
+    /**
+     * Adds edge between two vertices overwriting cost if vertex exists if necessary.
+     *
+     * @param fromKey From key.
+     * @param toKey To key.
+     * @param cost Cost.
+     * @param data Edge data. Used if there was no edge for these vertices.
+     * @return Current graph.
+     */
     private Graph addEdgeInternal(Key fromKey, Key toKey, double cost, Object data) {
         if (fromKey.equals(toKey)) {
             throw new IllegalStateException("Can't add cycle edge for: " + fromKey);
@@ -677,6 +777,12 @@ public class Graph implements Cloneable {
         return this;
     }
 
+    /**
+     * Removes vertex from graph removing all the outgoing and incoming edges.
+     *
+     * @param v Vertex to remove.
+     * @return Current graph.
+     */
     private Graph removeVertexInternal(Vertex v) {
         if (v == null) {
             return this;
