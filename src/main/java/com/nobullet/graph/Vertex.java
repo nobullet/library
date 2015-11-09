@@ -74,22 +74,48 @@ class Vertex implements Cloneable {
         this.data = Optional.ofNullable(data);
     }
 
+    /**
+     * Collection of outgoing edges.
+     *
+     * @return Outgoing edges.
+     */
     Collection<Edge> getOutgoingEdges() {
         return adjacentUnmodifiable.values();
     }
 
+    /**
+     * Number of outgoing edges.
+     *
+     * @return Number of outgoing edges.
+     */
     int getOutgoingEdgesNumber() {
         return adjacent.size();
     }
 
+    /**
+     * Adjacent vertices.
+     *
+     * @return Adjacent vertices.
+     */
     Set<Vertex> getAdjacentVertices() {
         return adjacentUnmodifiable.keySet();
     }
 
+    /**
+     * Adjacent vertices keys.
+     *
+     * @return Adjacent vertices keys.
+     */
     Set<Key> getAdjacentVerticesKeys() {
         return adjacentUnmodifiable.keySet().stream().map(vertex -> vertex.getKey()).collect(Collectors.toSet());
     }
 
+    /**
+     * Removes edge to vertex.
+     *
+     * @param to To vertex.
+     * @return Current vertex.
+     */
     Vertex removeEdgeTo(Vertex to) {
         Edge existing = this.adjacent.get(to);
         if (existing != null) {
@@ -99,19 +125,46 @@ class Vertex implements Cloneable {
         return this;
     }
 
+    /**
+     * Checks if the vertex has edge to other vertex.
+     *
+     * @param to To vertex.
+     * @return Whether the vertex has edge to other vertex.
+     */
     boolean hasEdge(Vertex to) {
         return adjacent.containsKey(to);
     }
 
+    /**
+     * Returns an edge to other vertex if it exists. Or returns null if it doesn't.
+     *
+     * @param to To vertex.
+     * @return Edge to other vertex or null.
+     */
     Edge getEdge(Vertex to) {
         return adjacent.get(to);
     }
 
+    /**
+     * Adds edge to other vertex with given cost if there was no edge. Updates cost if edge previously existed.
+     *
+     * @param to To vertex.
+     * @param cost Cost.
+     * @return Current vertex.
+     */
     Vertex addEdge(Vertex to, double cost) {
         addEdge(to, cost, null);
         return this;
     }
 
+    /**
+     * Adds edge to other vertex with given cost if there was no edge. Updates cost if edge previously existed.
+     *
+     * @param to To vertex.
+     * @param cost Cost.
+     * @param data Vertex data. Is not updated if edge exists.
+     * @return Current vertex.
+     */
     Vertex addEdge(Vertex to, double cost, Object data) {
         if (equals(to)) {
             throw new IllegalStateException("Can't add an edge to itself.");
@@ -126,24 +179,53 @@ class Vertex implements Cloneable {
         return this;
     }
 
+    /**
+     * Returns vertex key.
+     *
+     * @return Vertex key.
+     */
     Key getKey() {
         return key;
     }
 
+    /**
+     * Returns position for vertex.
+     *
+     * @return Position for vertex.
+     */
     Optional<VertexPosition> getPosition() {
         return position;
     }
 
-    void setPosition(VertexPosition position) {
+    /**
+     * Sets position for vertex.
+     *
+     * @param position Position.
+     * @return Current vertex.
+     */
+    Vertex setPosition(VertexPosition position) {
         this.position = Optional.ofNullable(position);
+        return this;
     }
 
+    /**
+     * Gets the data for vertex.
+     *
+     * @return Data for vertex.
+     */
     Optional<Object> getData() {
         return data;
     }
 
-    void setData(Object data) {
+    /**
+     * Sets the data for vertex.
+     *
+     * @param data Data.
+     * @return Current vertex.
+     */
+    Vertex setData(Object data) {
         this.data = Optional.ofNullable(data);
+        return this;
     }
 
     @Override

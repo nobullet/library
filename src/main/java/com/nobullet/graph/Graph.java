@@ -1036,6 +1036,16 @@ public class Graph implements Cloneable {
             return this.value;
         }
 
+        public double multiplyAndGet(double other) {
+            this.value *= other;
+            return this.value;
+        }
+
+        public double divideAndGet(double other) {
+            this.value /= other;
+            return this.value;
+        }
+
         public double subtractAndGet(double other) {
             this.value -= other;
             return this.value;
