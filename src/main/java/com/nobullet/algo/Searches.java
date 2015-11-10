@@ -11,7 +11,7 @@ public final class Searches {
 
     /**
      * Binary search for the given element.
-     *  
+     *
      * @param <T> Type of the element.
      * @param objects Objects to search in.
      * @param needle Needle.

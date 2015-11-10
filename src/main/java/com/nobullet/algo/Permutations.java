@@ -7,13 +7,13 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Permutations generator.
- * For academic interest. Check Guava's implementation (smart and fast) by Knuth.
+ * Permutations generator. For academic interest. Check Guava's implementation (smart and fast) by Knuth.
  */
 public class Permutations {
 
     /**
      * Generates a list of possible permutations for the given list.
+     *
      * @param <E> Type of the element.
      * @param source Source list
      * @return Permutations.

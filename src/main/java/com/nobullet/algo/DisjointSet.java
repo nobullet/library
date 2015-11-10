@@ -19,10 +19,11 @@ public class DisjointSet {
         if (size < 1) {
             throw new IllegalArgumentException("Size must be positive.");
         }
-        this.data = new int[size];
-        for (int i = 0; i < data.length; i++) {
-            this.data[i] = -1; // Default union size with '-'.
+        int[] dataLocal = new int[size];
+        for (int i = 0; i < size; i++) {
+            dataLocal[i] = -1; // Default union size with '-'.
         }
+        this.data = dataLocal;
     }
 
     /**
@@ -147,7 +148,8 @@ public class DisjointSet {
         checkIndex(itemIndex);
         int temp;
         int parentUnionIndex = itemIndex;
-        while ((temp = this.data[parentUnionIndex]) >= 0) {
+        int[] dataLocal = this.data;
+        while ((temp = dataLocal[parentUnionIndex]) >= 0) {
             parentUnionIndex = temp;
         }
         return parentUnionIndex;
