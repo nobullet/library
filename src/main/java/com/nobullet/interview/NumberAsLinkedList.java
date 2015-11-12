@@ -1,7 +1,5 @@
 package com.nobullet.interview;
 
-import java.util.Objects;
-
 /**
  * You have two numbers represented by a linked list, where each node contains a single digit. The digits are stored in
  * reverse order, such that the 1’s digit is at the head of the list. Write a function that adds the two numbers and
@@ -16,6 +14,11 @@ public class NumberAsLinkedList {
 
     private Node head;
 
+    /**
+     * Constructs linked list from number.
+     *
+     * @param number
+     */
     public NumberAsLinkedList(long number) {
         if (number < 0L) {
             throw new IllegalArgumentException("Positive value expected: " + number);
@@ -35,10 +38,21 @@ public class NumberAsLinkedList {
         } while (number > 0);
     }
 
+    /**
+     * Private constructor.
+     *
+     * @param head Head of the linked list.
+     */
     private NumberAsLinkedList(Node head) {
         this.head = head;
     }
 
+    /**
+     * Adds other number to this number.
+     *
+     * @param other Other number.
+     * @return New number: a result of addition.
+     */
     public NumberAsLinkedList add(NumberAsLinkedList other) {
         Node sumHead = null, sumCurrent = null;
         int overflow = 0;
@@ -78,6 +92,11 @@ public class NumberAsLinkedList {
         return new NumberAsLinkedList(sumHead);
     }
 
+    /**
+     * Reverses the number.
+     *
+     * @return New number, reversed.
+     */
     public NumberAsLinkedList reverse() {
         Node currentThis = head;
         Node previousCopy = null;
@@ -103,6 +122,9 @@ public class NumberAsLinkedList {
         return sb.toString();
     }
 
+    /**
+     * Node in linked list.
+     */
     private static class Node {
 
         int value;
@@ -111,22 +133,6 @@ public class NumberAsLinkedList {
 
         public Node(int value) {
             this.value = value;
-        }
-
-        @Override
-        public int hashCode() {
-            int hash = 7;
-            hash = 53 * hash + Objects.hashCode(this.value);
-            return hash;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == null || getClass() != obj.getClass()) {
-                return false;
-            }
-            final Node other = (Node) obj;
-            return Objects.equals(this.value, other.value);
         }
 
         @Override
