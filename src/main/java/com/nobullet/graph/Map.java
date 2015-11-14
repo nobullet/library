@@ -3,6 +3,7 @@ package com.nobullet.graph;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -140,7 +141,7 @@ public class Map {
             return Path.emptyPath();
         }
 
-        Deque<Cell> frontier = new LinkedList<>();
+        Deque<Cell> frontier = new ArrayDeque<>();
         frontier.addLast(source);
 
         java.util.Map<Cell, Cell> cameFrom = new HashMap<>();
@@ -575,7 +576,7 @@ public class Map {
             long height = heights[xIndex];
             if (rectangles == null && height > 0) {
                 // Create stack only when positive height is found.
-                rectangles = new LinkedList<>();
+                rectangles = new ArrayDeque<>();
             }
             if (height > 0 && (rectangles.isEmpty() || height > rectangles.peek().getHeight())) {
                 // Initial branch when there are no rectangles in stack or new opening higher rectangle.

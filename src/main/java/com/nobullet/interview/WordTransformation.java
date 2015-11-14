@@ -1,11 +1,11 @@
 package com.nobullet.interview;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,7 +38,7 @@ public final class WordTransformation {
         if (!dictionary.contains(source) || !dictionary.contains(target)) {
             return Collections.emptyList();
         }
-        Deque<String> frontier = new LinkedList<>();
+        Deque<String> frontier = new ArrayDeque<>(dictionary.size());
         Map<String, String> cameFrom = new HashMap<>();
         cameFrom.put(source, NOWHERE);
         frontier.addLast(source);
