@@ -1,6 +1,14 @@
 package com.nobullet.algo;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.RandomAccess;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
 /**
@@ -27,25 +35,6 @@ public class BinarySearchTree<T extends Comparable<? super T>> {
     public BinarySearchTree(T initialValue) {
         this.root = new Node<>(initialValue);
         this.numberOfNodes++;
-    }
-
-    /**
-     * Adds all elements into the BST.
-     *
-     * @param values Values to add.
-     * @return Current BST.
-     */
-    public BinarySearchTree<T> addAll(Collection<T> values) {
-        if (values == null) {
-            throw new NullPointerException("Values is expected.");
-        }
-        for (T value : values) {
-            if (value == null) {
-                throw new NullPointerException("Value is expected.");
-            }
-            add(value);
-        }
-        return this;
     }
 
     /**
@@ -78,9 +67,52 @@ public class BinarySearchTree<T extends Comparable<? super T>> {
     }
 
     /**
+     * Adds all elements into the BST.
+     *
+     * @param values Values to add.
+     * @return Current BST.
+     */
+    public BinarySearchTree<T> addAll(Collection<T> values) {
+        if (values == null) {
+            throw new NullPointerException("Values is expected.");
+        }
+        for (T value : values) {
+            if (value == null) {
+                throw new NullPointerException("Value is expected.");
+            }
+            add(value);
+        }
+        return this;
+    }
+
+    /**
+     * Builds balanced tree from given sorted list.
+     *
+     * @param <L> Type for implementation of {@link RandomAccess} {@link List}.
+     * @param sortedList Sorted list.
+     * @return Current BST.
+     */
+    public <L extends List<T> & RandomAccess> BinarySearchTree<T> addAllSorted(L sortedList) {
+        addAllSorted(sortedList, 0, sortedList.size() - 1);
+        return this;
+    }
+
+    private <L extends List<T> & RandomAccess> void addAllSorted(L list, int from, int to) {
+        int mid = (from + to) >>> 1;
+        add(list.get(mid));
+        if (from < mid) {
+            addAllSorted(list, from, mid - 1);
+        }
+        if (mid < to) {
+            addAllSorted(list, mid + 1, to);
+        }
+    }
+
+    /**
      * Removes the node. O(log N).
      *
      * @param value Value to remove.
+     * @return Current BST.
      */
     public BinarySearchTree<T> remove(T value) {
         if (root == null) {
@@ -95,10 +127,6 @@ public class BinarySearchTree<T extends Comparable<? super T>> {
         Node<T> parent = null;
         int temp;
         while (current != null) {
-            if (current.value == null) {
-                throw new IllegalStateException(
-                        "Expected value: " + System.identityHashCode(current) + " Node: " + node + " Value:" + value);
-            }
             temp = value.compareTo(current.value);
             if (temp < 0) {
                 parent = current;
@@ -174,8 +202,92 @@ public class BinarySearchTree<T extends Comparable<? super T>> {
         }
     }
 
+    /**
+     * Returns height of the tree. O(N).
+     *
+     * @return Height of the tree.
+     */
+    public int height() {
+        return height(root);
+    }
+
+    private int height(Node<T> parent) {
+        if (parent == null) {
+            return 0;
+        }
+        return 1 + Math.max(height(parent.left), height(parent.right));
+    }
+
+    /**
+     * Checks if the given sub-tree is balanced in O(N).
+     *
+     * @return Whether the given sub-tree is balanced in O(N),
+     */
     public boolean isBalanced() {
-        throw new UnsupportedOperationException();
+        AtomicInteger height = new AtomicInteger();
+        return isBalanced(root, height);
+    }
+
+    /**
+     * Checks if the given sub-tree is balanced in O(N), using {@link AtomicInteger} as a mutable int.
+     *
+     * @param parent Parent node.
+     * @param height Current height;
+     * @return Whether the given sub-tree is balanced in O(N).
+     */
+    private boolean isBalanced(Node<T> parent, AtomicInteger height) {
+        if (parent == null) {
+            return true;
+        }
+        AtomicInteger leftHeight = new AtomicInteger(0);
+        AtomicInteger rightHeight = new AtomicInteger(0);
+        boolean isLeftBalanced = isBalanced(parent.left, leftHeight);
+        boolean isRightBalanced = isBalanced(parent.right, rightHeight);
+        height.set(1 + Math.max(leftHeight.get(), rightHeight.get()));
+        if (Math.abs(leftHeight.get() - rightHeight.get()) >= 2) {
+            return false;
+        }
+        return isLeftBalanced && isRightBalanced;
+    }
+
+    /*
+     * Naive O(N^2) implementation.
+     public boolean isBalanced() {
+     return isBalanced(root);
+     }
+
+     private boolean isBalanced(Node<T> parent) {
+     if (parent == null) {
+     return true;
+     }
+     return (Math.abs(height(parent.left) - height(parent.right)) <= 1)
+     && isBalanced(parent.left)
+     && isBalanced(parent.right);
+     }
+     */
+    /**
+     * Checks if no two leaf nodes differ in distance from the root by more than one. O(N).
+     *
+     * @return Whether no two leaf nodes differ in distance from the root by more than one.
+     */
+    public boolean hasNoTwoLeafNodesDifferInDistanceByMoreThanOne() {
+        if (root == null) {
+            return true;
+        }
+        Set<Integer> leafLevels = new HashSet<>();
+        inOrderInternal(root, (node, level) -> {
+            if (node.left == null && node.right == null) {
+                leafLevels.add(level);
+            }
+        }, 0);
+        if (leafLevels.size() == 1) {
+            return true;
+        }
+        if (leafLevels.size() != 2) {
+            return false;
+        }
+        Iterator<Integer> it = leafLevels.iterator();
+        return Math.abs(it.next() - it.next()) <= 1;
     }
 
     /**
@@ -190,6 +302,13 @@ public class BinarySearchTree<T extends Comparable<? super T>> {
         return findMin(root).value;
     }
 
+    private Node<T> findMin(Node<T> parent) {
+        while (parent.left != null) {
+            parent = parent.left;
+        }
+        return parent;
+    }
+
     /**
      * Returns maximal value from tree. O(log N).
      *
@@ -202,13 +321,6 @@ public class BinarySearchTree<T extends Comparable<? super T>> {
         return findMax(root).value;
     }
 
-    private Node<T> findMin(Node<T> parent) {
-        while (parent.left != null) {
-            parent = parent.left;
-        }
-        return parent;
-    }
-
     private Node<T> findMax(Node<T> parent) {
         while (parent.right != null) {
             parent = parent.right;
@@ -216,6 +328,11 @@ public class BinarySearchTree<T extends Comparable<? super T>> {
         return parent;
     }
 
+    /**
+     * Traverses the BST in-order.
+     *
+     * @param visitor Visitor that accepts the value and the level of the node.
+     */
     public void inOrder(BiConsumer<T, Integer> visitor) {
         if (root == null) {
             return;
@@ -236,6 +353,46 @@ public class BinarySearchTree<T extends Comparable<? super T>> {
         }
     }
 
+    /**
+     * Traverses the BST in-order.
+     *
+     * @param visitor Visitor that accepts the value and the level of the node.
+     */
+    public void breadthFirst(BiConsumer<T, Integer> visitor) {
+        if (root == null) {
+            return;
+        }
+        breadthFirstInternal(root, (node, level) -> visitor.accept(node.value, level));
+    }
+
+    private void breadthFirstInternal(Node<T> parent, BiConsumer<Node<T>, Integer> visitor) {
+        Deque<Node<T>> frontier = new ArrayDeque<>(this.numberOfNodes);
+        Deque<Integer> levels = new ArrayDeque<>(this.numberOfNodes);
+
+        frontier.addLast(parent);
+        levels.add(0);
+
+        while (!frontier.isEmpty()) {
+            Node<T> current = frontier.removeFirst();
+            int level = levels.removeFirst();
+            visitor.accept(current, level);
+            if (current.left != null) {
+                frontier.addLast(current.left);
+                levels.addLast(level + 1);
+            }
+            if (current.right != null) {
+                frontier.addLast(current.right);
+                levels.addLast(level + 1);
+            }
+        }
+    }
+
+    /**
+     * Returns node with value or the parent node (insertion point).
+     *
+     * @param value Value to find.
+     * @return node with value or the parent node (insertion point).
+     */
     private Node<T> findInternal(T value) {
         Node<T> current = root;
         Node<T> parent = null;
@@ -254,6 +411,23 @@ public class BinarySearchTree<T extends Comparable<? super T>> {
         }
         // If was not found - return parent (insertion point).
         return parent;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("\n0: ");
+        AtomicInteger mutableLevel = new AtomicInteger(0);
+        breadthFirst((value, level) -> {
+            if (mutableLevel.get() != level) {
+                sb.append("\n")
+                        .append(level)
+                        .append(": ");
+                mutableLevel.set(level);
+            }
+            sb.append(value).append(" ");
+        });
+        sb.append("\n");
+        return sb.toString();
     }
 
     private static class Node<T> {

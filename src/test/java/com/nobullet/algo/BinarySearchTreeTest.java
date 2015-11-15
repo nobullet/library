@@ -2,10 +2,13 @@ package com.nobullet.algo;
 
 import static com.nobullet.MoreAssertions.assertListsEqual;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.Before;
@@ -17,10 +20,12 @@ import org.junit.Test;
 public class BinarySearchTreeTest {
 
     List<Integer> numbers;
+    List<Integer> numbersSmallerSet;
     BinarySearchTree<Integer> bst;
 
     @Before
     public void setUp() {
+        numbersSmallerSet = Lists.newArrayList(10, 20, 15, 5, 7, 1, 25);
         numbers = Lists.newArrayList(10, 1, 19, 2, 18, 8, 4, 7, 3, 5, 6, 17, 11, 12, 16, 14, 13, 15);
         bst = new BinarySearchTree<>();
     }
@@ -48,9 +53,9 @@ public class BinarySearchTreeTest {
         List<Integer> sorted = Stream.concat(Stream.of(3, 3), numbers.stream()).sorted().collect(Collectors.toList());
         assertListsEqual(sorted, traverseResult);
         assertEquals("Must contain 2 additional 3's.", numbers.size() + 2, traverseResult.size());
-        
+
         bst.remove(3).remove(3);
-        
+
         List<Integer> traverseResult2 = Lists.newArrayListWithCapacity(numbers.size());
         bst.inOrder((number, level) -> traverseResult2.add(number));
         sorted = numbers.stream().sorted().collect(Collectors.toList());
@@ -60,8 +65,7 @@ public class BinarySearchTreeTest {
 
     @Test
     public void testDelete() {
-        bst = new BinarySearchTree<>();
-        bst.addAll(Lists.newArrayList(10, 20, 15, 5, 7, 1, 25));
+        bst.addAll(numbersSmallerSet);
 
         bst.remove(10);
         bst.remove(20);
@@ -99,5 +103,73 @@ public class BinarySearchTreeTest {
         List<Integer> traverseResult = Lists.newArrayListWithCapacity(numbers.size());
         bst.inOrder((number, level) -> traverseResult.add(number));
         assertListsEqual(Collections.emptyList(), traverseResult);
+    }
+
+    @Test
+    public void testHasNoTwoLeafNodesDifferInDistanceByMoreThanOne() {
+        assertTrue(bst.hasNoTwoLeafNodesDifferInDistanceByMoreThanOne());
+
+        bst.addAll(numbers);
+        assertFalse(bst.hasNoTwoLeafNodesDifferInDistanceByMoreThanOne());
+
+        bst = new BinarySearchTree<>();
+        bst.addAll(numbersSmallerSet);
+        assertTrue(bst.hasNoTwoLeafNodesDifferInDistanceByMoreThanOne());
+
+        bst = new BinarySearchTree<>();
+        bst.addAll(Lists.newArrayList(2, 1, 3));
+        assertTrue(bst.hasNoTwoLeafNodesDifferInDistanceByMoreThanOne());
+    }
+
+    @Test
+    public void testIsBalanced() {
+        assertTrue(bst.isBalanced());
+
+        bst.addAll(numbers);
+        assertFalse(bst.isBalanced());
+
+        bst = new BinarySearchTree<>();
+        bst.addAll(numbersSmallerSet);
+        assertTrue(bst.isBalanced());
+
+        bst = new BinarySearchTree<>();
+        bst.addAll(Lists.newArrayList(2, 1, 3));
+        assertTrue(bst.isBalanced());
+    }
+
+    @Test
+    public void testCreateBalancedFromSortedList() {
+        bst.addAll(numbers);
+        assertFalse(bst.isBalanced());
+
+        bst = new BinarySearchTree<>();
+        bst.addAllSorted(Lists.newArrayList(1, 3));
+        assertTrue(bst.isBalanced());
+
+        bst = new BinarySearchTree<>();
+        bst.addAllSorted(Lists.newArrayList(1, 2, 3));
+        assertTrue(bst.isBalanced());
+
+        bst = new BinarySearchTree<>();
+        bst.addAllSorted(Lists.newArrayList(1, 2, 3, 4));
+        assertTrue(bst.isBalanced());
+
+        bst = new BinarySearchTree<>();
+        bst.addAllSorted(Lists.newArrayList(1, 2, 3, 4, 5));
+        assertTrue(bst.isBalanced());
+
+        bst = new BinarySearchTree<>();
+        bst.addAllSorted(Lists.newArrayList(1, 2, 2, 3, 3));
+        assertTrue(bst.isBalanced());
+
+        bst = new BinarySearchTree<>();
+        bst.addAllSorted(numbers.stream().sorted().collect(Collectors.toCollection(ArrayList::new)));
+        assertTrue(bst.isBalanced());
+
+        Logger.getLogger(this.getClass().getName()).info(bst.toString());
+
+        bst = new BinarySearchTree<>();
+        bst.addAllSorted(numbersSmallerSet.stream().sorted().collect(Collectors.toCollection(ArrayList::new)));
+        assertTrue(bst.isBalanced());
     }
 }
