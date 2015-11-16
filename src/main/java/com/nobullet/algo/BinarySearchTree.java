@@ -8,7 +8,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.RandomAccess;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
 /**
@@ -224,47 +223,50 @@ public class BinarySearchTree<T extends Comparable<? super T>> {
      * @return Whether the given sub-tree is balanced in O(N),
      */
     public boolean isBalanced() {
-        AtomicInteger height = new AtomicInteger();
+        MutableInteger height = new MutableInteger();
         return isBalanced(root, height);
     }
 
     /**
-     * Checks if the given sub-tree is balanced in O(N), using {@link AtomicInteger} as a mutable int.
+     * Checks if the given sub-tree is balanced in O(N), using mutable int.
      *
      * @param parent Parent node.
      * @param height Current height;
      * @return Whether the given sub-tree is balanced in O(N).
      */
-    private boolean isBalanced(Node<T> parent, AtomicInteger height) {
+    private boolean isBalanced(Node<T> parent, MutableInteger height) {
         if (parent == null) {
             return true;
         }
-        AtomicInteger leftHeight = new AtomicInteger(0);
-        AtomicInteger rightHeight = new AtomicInteger(0);
+        MutableInteger leftHeight = new MutableInteger();
+        MutableInteger rightHeight = new MutableInteger();
         boolean isLeftBalanced = isBalanced(parent.left, leftHeight);
         boolean isRightBalanced = isBalanced(parent.right, rightHeight);
-        height.set(1 + Math.max(leftHeight.get(), rightHeight.get()));
-        if (Math.abs(leftHeight.get() - rightHeight.get()) >= 2) {
+        height.value = 1 + Math.max(leftHeight.value, rightHeight.value);
+        if (Math.abs(leftHeight.value - rightHeight.value) >= 2) {
             return false;
         }
         return isLeftBalanced && isRightBalanced;
     }
 
-    /*
-     * Naive O(N^2) implementation.
-     public boolean isBalanced() {
-     return isBalanced(root);
-     }
-
-     private boolean isBalanced(Node<T> parent) {
-     if (parent == null) {
-     return true;
-     }
-     return (Math.abs(height(parent.left) - height(parent.right)) <= 1)
-     && isBalanced(parent.left)
-     && isBalanced(parent.right);
-     }
+    /**
+     * Checks if the current BST is balanced in O(N^2).
+     *
+     * @return Whether the current BST is balanced.
      */
+    public boolean isBalancedNaive() {
+        return isBalancedNaive(root);
+    }
+
+    private boolean isBalancedNaive(Node<T> parent) {
+        if (parent == null) {
+            return true;
+        }
+        return (Math.abs(height(parent.left) - height(parent.right)) <= 1)
+                && isBalancedNaive(parent.left)
+                && isBalancedNaive(parent.right);
+    }
+
     /**
      * Checks if no two leaf nodes differ in distance from the root by more than one. O(N).
      *
@@ -337,7 +339,8 @@ public class BinarySearchTree<T extends Comparable<? super T>> {
         if (root == null) {
             return;
         }
-        inOrderInternal(root, (node, level) -> visitor.accept(node.value, level), 0);
+        //inOrderInternal(root, (node, level) -> visitor.accept(node.value, level), 0);
+        inOrderInternalIterative(root, (node, level) -> visitor.accept(node.value, level));
     }
 
     private void inOrderInternal(Node<T> parent, BiConsumer<Node<T>, Integer> visitor, int level) {
@@ -350,6 +353,47 @@ public class BinarySearchTree<T extends Comparable<? super T>> {
         }
         if (parent.right != null) {
             inOrderInternal(parent.right, visitor, level + 1);
+        }
+    }
+
+    /**
+     * Traverses the BST in-order.
+     *
+     * @param visitor Visitor that accepts the value and the level of the node.
+     */
+    public void inOrderIterative(BiConsumer<T, Integer> visitor) {
+        if (root == null) {
+            return;
+        }
+        inOrderInternalIterative(root, (node, level) -> visitor.accept(node.value, level));
+    }
+
+    private void inOrderInternalIterative(Node<T> parent, BiConsumer<Node<T>, Integer> visitor) {
+        Deque<Node<T>> nodesStack = new ArrayDeque<>(this.numberOfNodes);
+        Deque<Integer> levelsStack = new ArrayDeque<>(this.numberOfNodes);
+
+        Node<T> current = parent;
+        int levelCurrent = 0;
+
+        boolean done = false;
+        while (!done) {
+            if (current != null) {
+                nodesStack.push(current);
+                levelsStack.push(levelCurrent++);
+                current = current.left;
+            } else {
+                if (!nodesStack.isEmpty()) {
+                    current = nodesStack.pop();
+                    levelCurrent = levelsStack.pop();
+                    int repeats = current.count;
+                    while (repeats-- > 0) {
+                        visitor.accept(current, levelCurrent);
+                    }
+                    current = current.right;
+                } else {
+                    done = true;
+                }
+            }
         }
     }
 
@@ -416,13 +460,13 @@ public class BinarySearchTree<T extends Comparable<? super T>> {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("\n0: ");
-        AtomicInteger mutableLevel = new AtomicInteger(0);
+        MutableInteger mutableLevel = new MutableInteger();
         breadthFirst((value, level) -> {
-            if (mutableLevel.get() != level) {
+            if (mutableLevel.value != level) {
                 sb.append("\n")
                         .append(level)
                         .append(": ");
-                mutableLevel.set(level);
+                mutableLevel.value = level;
             }
             sb.append(value).append(" ");
         });
@@ -454,5 +498,10 @@ public class BinarySearchTree<T extends Comparable<? super T>> {
         public String toString() {
             return "{v: " + value + ", c=" + count + '}';
         }
+    }
+
+    private static class MutableInteger {
+
+        int value;
     }
 }

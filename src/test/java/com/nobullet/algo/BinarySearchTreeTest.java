@@ -172,4 +172,14 @@ public class BinarySearchTreeTest {
         bst.addAllSorted(numbersSmallerSet.stream().sorted().collect(Collectors.toCollection(ArrayList::new)));
         assertTrue(bst.isBalanced());
     }
+    
+    @Test
+    public void testInOrderIterative() {
+        bst.addAll(numbers);
+
+        List<Integer> traverseResult = Lists.newArrayListWithCapacity(numbers.size());
+        bst.inOrderIterative((number, level) -> traverseResult.add(number));
+        List<Integer> sorted = numbers.stream().sorted().collect(Collectors.toList());
+        assertListsEqual(sorted, traverseResult);
+    }
 }
