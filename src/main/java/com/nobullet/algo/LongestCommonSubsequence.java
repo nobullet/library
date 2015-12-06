@@ -43,9 +43,9 @@ public final class LongestCommonSubsequence {
     }
 
     /**
-     * Finds common subsequence of characters from given lists.
+     * Finds common subsequence of elements from given lists.
      *
-     * @param <T> Type
+     * @param <T> Type.
      * @param source1 List 1.
      * @param source2 List 2.
      * @return List, containing one of the longest subsequences.
@@ -55,9 +55,9 @@ public final class LongestCommonSubsequence {
     }
 
     /**
-     * Finds common subsequence of characters from given arrays.
+     * Finds common subsequence of elements from given arrays.
      *
-     * @param <T> Type
+     * @param <T> Type.
      * @param source1 Array 1.
      * @param source2 Array 2.
      * @return List, containing one of the longest subsequences.
@@ -69,7 +69,7 @@ public final class LongestCommonSubsequence {
     /**
      * Finds common subsequence of elements for given indexables.
      *
-     * @param <T> Type
+     * @param <T> Type.
      * @param source1 Indexable 1.
      * @param source2 Indexable 2.
      * @return List, containing one of the longest subsequences.

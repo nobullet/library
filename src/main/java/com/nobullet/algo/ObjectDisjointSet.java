@@ -105,6 +105,7 @@ public class ObjectDisjointSet<T> {
 
     /**
      * Finds index for given object.
+     *
      * @param object Object.
      * @return Index for given object.
      */

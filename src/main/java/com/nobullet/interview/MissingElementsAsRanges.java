@@ -8,6 +8,14 @@ import java.util.function.BiConsumer;
  */
 public class MissingElementsAsRanges {
 
+    /**
+     * Solves the missing elements problem.
+     *
+     * @param from Range from, including.
+     * @param to Range to, excluding.
+     * @param numbers Numbers.
+     * @param rangesConsumer Ranges consumer. Parameters may be the same, indicating the number.
+     */
     public static void find(int from, int to, int[] numbers, BiConsumer<Integer, Integer> rangesConsumer) {
         int numbersRangeSize = to - from;
         if (numbersRangeSize < 1) {

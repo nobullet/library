@@ -110,6 +110,11 @@ public final class Indexables {
         public int size() {
             return source.length();
         }
+
+        @Override
+        public String toString() {
+            return source.toString();
+        }
     }
 
     private Indexables() {
