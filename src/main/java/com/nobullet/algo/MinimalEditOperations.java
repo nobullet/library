@@ -110,12 +110,12 @@ public final class MinimalEditOperations {
                 result.set(operationIndex, new Operation(Type.INSERT, i, j - 1));
                 operationIndex--;
                 j--;
-            } else if (value == distances[i - 1][j] + 1)  { // DELETION.
+            } else if (value == distances[i - 1][j] + 1) { // DELETION.
                 result.set(operationIndex, new Operation(Type.DELETE, i - 1, j));
                 operationIndex--;
                 i--;
             } else {
-                if (!source1.get(i - 1).equals(source2.get(j - 1))) { // REPLACE.
+                if (!source1.get(i - 1).equals(source2.get(j - 1))) { // REPLACEMENT.
                     result.set(operationIndex, new Operation(Type.REPLACE, i - 1, j - 1));
                     operationIndex--;
                 }
@@ -126,6 +126,9 @@ public final class MinimalEditOperations {
         return result;
     }
 
+    /**
+     * Operation.
+     */
     public static class Operation {
 
         final Type type;
@@ -138,14 +141,29 @@ public final class MinimalEditOperations {
             this.source2Index = source2Index;
         }
 
+        /**
+         * Type of the operation.
+         *
+         * @return Type.
+         */
         public Type getType() {
             return type;
         }
 
+        /**
+         * Index of the item in source 1.
+         *
+         * @return Source 1 item index.
+         */
         public int getSource1Index() {
             return source1Index;
         }
 
+        /**
+         * Index of the item in source 2.
+         *
+         * @return Source 2 item index.
+         */
         public int getSource2Index() {
             return source2Index;
         }
@@ -156,6 +174,9 @@ public final class MinimalEditOperations {
         }
     }
 
+    /**
+     * Type of the operation.
+     */
     public enum Type {
         INSERT, REPLACE, DELETE;
     }
