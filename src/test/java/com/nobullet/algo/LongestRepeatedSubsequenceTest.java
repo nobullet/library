@@ -26,7 +26,7 @@ public class LongestRepeatedSubsequenceTest {
 
     @Test
     public void testIntegers() {
-        List<Integer> lrs = LongestRepeatedSubsequence.fromArray(new Integer[] {1,2,3,1,2,3});
+        List<Integer> lrs = LongestRepeatedSubsequence.fromArray(new Integer[]{1, 2, 3, 1, 2, 3});
         assertEquals(Lists.newArrayList(1, 2, 3), lrs);
     }
 }
