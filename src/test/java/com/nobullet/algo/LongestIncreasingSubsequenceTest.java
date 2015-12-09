@@ -13,8 +13,8 @@ public class LongestIncreasingSubsequenceTest {
 
     @Test
     public void testLIS_oN2() {
-        List<Integer> expected = Lists.newArrayList(1, 2, 3, 4, 5);
-        List<Integer> source = Lists.newArrayList(9, 10, 11, 1, 3, 2, 3, 4, 6, -1, 5);
+        List<Integer> expected = Lists.newArrayList(1, 2, 3, 3, 4, 5);
+        List<Integer> source = Lists.newArrayList(9, 10, 11, 1, 3, 2, 3, 3, 4, 6, -1, 5);
         
         assertThat(expected, contains(LongestIncreasingSubsequence.fromListInNSquare(source).toArray()));
     }
@@ -22,7 +22,7 @@ public class LongestIncreasingSubsequenceTest {
     @Test
     public void testLIS_oNLogN() {
         List<Integer> expected = Lists.newArrayList(1, 2, 3, 4, 5);
-        List<Integer> source = Lists.newArrayList(9, 10, 11, 1, 3, 2, 3, 4, 6, -1, 5);
+        List<Integer> source = Lists.newArrayList(9, 10, 11, 1, 3, 2, 3, 3, 3, 3, 3, 3, 4, 6, -1, 5);
         
         assertThat(expected, contains(LongestIncreasingSubsequence.fromList(source).toArray()));
     }
