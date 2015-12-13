@@ -4,7 +4,10 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Implements quick sort.
+ * Implements Quick sort with median-of-three pivot and 'fat partition': partition separates the values into three
+ * groups: values less than the pivot, values equal to the pivot, and values greater than the pivot. Partition
+ * procedure returns two indices: one before the pivot(s), the second is after the pivot(s). It helps to finish
+ * sorting of list of the same elements in linear time.
  */
 public final class QuickSort {
 
@@ -90,10 +93,10 @@ public final class QuickSort {
             while (leftIndex <= rightIndex && compare(comparator, items.get(rightIndex), pivot) > 0) {
                 rightIndex--;
             }
-            if (leftIndex <= rightIndex) {
+            if (leftIndex < rightIndex) {
                 swap(items, leftIndex, rightIndex);
             }
-        } while (leftIndex <= rightIndex);
+        } while (leftIndex < rightIndex);
         // leftIndex + 1 is the index of the first element > pivot.
         // Place pivots to the right place.
         groupPivotIndex--;

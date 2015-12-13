@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test for {@link QuickSort}.
@@ -81,5 +82,28 @@ public class QuickSortTest {
         String message = String.format("No more than %d (size: %d) comparisons for same elements case.",
                 3 + items.size(), items.size());
         assertEquals(message, items.size() + 3, counter.get());
+    }
+
+    @Test
+    public void testAlmostSortedElements() {
+        AtomicInteger counter = new AtomicInteger(0);
+        Comparator<Integer> countingComparator = (a, b) -> {
+            counter.incrementAndGet();
+            return a.compareTo(b);
+        };
+
+        AtomicInteger counter2 = new AtomicInteger(0);
+        Comparator<Integer> countingComparator2 = (a, b) -> {
+            counter2.incrementAndGet();
+            return a.compareTo(b);
+        };
+
+        List<Integer> items = new ArrayList<>(Arrays.asList(6, 6, 6, 6, 6, 6, 7, 6, 6, 6, 6));
+        List<Integer> copy = new ArrayList<>(items);
+        QuickSort.sort(items, countingComparator);
+        Collections.sort(copy, countingComparator2);
+        assertEquals(copy, items);
+
+        assertTrue("Still worse than ComparableTimSort sort.", counter2.get() < counter.get());
     }
 }
