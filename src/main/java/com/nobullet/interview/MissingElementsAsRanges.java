@@ -4,16 +4,18 @@ import java.util.function.BiConsumer;
 
 /**
  * Find all missing elements from the array of integers that are in a given range X-Y. Process missing elements as
- * ranges.
+ * ranges. <p>
+ * (0, 99, new int[]{88, 105, 3, 2, 4, 200, 0, 10} -> "1,5-9,11-87,89-99"
+ * </p>
  */
 public class MissingElementsAsRanges {
 
     /**
      * Solves the missing elements problem.
      *
-     * @param from Range from, including.
-     * @param to Range to, excluding.
-     * @param numbers Numbers.
+     * @param from           Range from, including.
+     * @param to             Range to, excluding.
+     * @param numbers        Numbers.
      * @param rangesConsumer Ranges consumer. Parameters may be the same, indicating the number.
      */
     public static void find(int from, int to, int[] numbers, BiConsumer<Integer, Integer> rangesConsumer) {
