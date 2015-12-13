@@ -1,4 +1,4 @@
-package com.nobullet.interview;
+package com.nobullet.algo;
 
 import java.util.Comparator;
 import java.util.List;

@@ -1,5 +1,6 @@
-package com.nobullet.interview;
+package com.nobullet.algo;
 
+import com.nobullet.algo.QuickSort;
 import org.junit.Test;
 
 import java.util.ArrayList;
