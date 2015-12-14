@@ -37,6 +37,30 @@ public class SearchesTest {
     }
 
     @Test
+    public void testBinaryCount() {
+        List<Integer> numbers = new ArrayList<>(SORTED_INTEGERS.size() + 2);
+        numbers.add(1);
+        numbers.addAll(SORTED_INTEGERS);
+        numbers.add(50001);
+        assertEquals(1, Searches.binaryCount(numbers, 8888));
+        assertEquals(3, Searches.binaryCount(numbers, 50000));
+        assertEquals(2, Searches.binaryCount(numbers, 3));
+        assertEquals(2, Searches.binaryCount(numbers, 1));
+        assertEquals(2, Searches.binaryCount(numbers, 50001));
+    }
+
+    @Test
+    public void testBinaryCount_allSame() {
+        List<Integer> numbers = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            numbers.add(10);
+        }
+        assertEquals(10, Searches.binaryCount(numbers, 10));
+        numbers.add(10);
+        assertEquals(11, Searches.binaryCount(numbers, 10));
+    }
+
+    @Test
     @Ignore
     public void testShifted() {
         for (int i = 1; i <= SORTED_INTEGERS.size(); i++) {
