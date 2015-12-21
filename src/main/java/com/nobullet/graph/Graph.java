@@ -936,7 +936,7 @@ public class Graph implements Cloneable {
     }
 
     /**
-     * Mutable long for internals (topological sort).
+     * Mutable long for internals (topological quickSort).
      */
     static class MutableLong {
 

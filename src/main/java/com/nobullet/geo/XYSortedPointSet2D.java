@@ -13,7 +13,7 @@ import java.util.logging.Logger;
  *
  * Operations:
  *
- * add(element) : O(n log n) - because of internal sort.<br>
+ * add(element) : O(n log n) - because of internal quickSort.<br>
  * nearestNeighbour(needle) : O(log n) on average, O(n) worst time.<br>
  * nearestNeighbourLinear(n): O(n).
  */

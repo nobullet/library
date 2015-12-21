@@ -43,7 +43,7 @@ public final class Searches {
      * @param needle     Needle.
      * @param comparator Comparator.
      * @param fromIndex  From index.
-     * @param toIndex    To index.
+     * @param toIndex    To index. Excluding.
      * @return Index of the element or negative number reflecting the insertion point as in
      * {@link java.util.Collections#binarySearch(java.util.List, java.lang.Object, java.util.Comparator)}.
      */
