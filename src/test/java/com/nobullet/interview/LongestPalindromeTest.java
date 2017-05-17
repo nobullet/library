@@ -19,5 +19,7 @@ public class LongestPalindromeTest {
                 LongestPalindrome.getLongestPalindromeON3(""));
         assertEquals("1",
                 LongestPalindrome.getLongestPalindromeON3("12"));
+        assertEquals("12345678900987654321",
+                LongestPalindrome.getLongestPalindromeON3("1 5555555555 00~~12345678900987654321  abbaabbaabbaabbba"));
     }
 }
