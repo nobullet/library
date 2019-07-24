@@ -88,13 +88,13 @@ public final class Searches {
     }
 
     /**
-     * Counts the number of occurences of the needle in the given sorted list.
+     * Counts the number of occurrences of the needle in the given sorted list.
      *
      * @param objects Sorted objects list.
      * @param needle  Needle.
      * @param comparator Comparator.
      * @param <T>     Type.
-     * @return Number of occurences of the needle in the given sorted list.
+     * @return Number of occurrences of the needle in the given sorted list.
      */
     public static <T> int binaryCount(List<? extends T> objects, T needle, Comparator<? super T> comparator) {
         int needleIndex = binarySearch(objects, needle, comparator);
