@@ -5,16 +5,32 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Permutations generator. For academic interest. Check Guava's implementation (smart and fast) by Knuth.
  */
 public class Permutations {
 
+    public static void permutations(String source, Consumer<String> permutationConsumer) {
+        permutations("", source, permutationConsumer);
+    }
+
+    static void permutations(String perm, String word, Consumer<String> permutationConsumer) {
+        if (word.isEmpty()) {
+            permutationConsumer.accept(perm);
+        } else {
+            for (int i = 0; i < word.length(); i++) {
+                String remaining = word.substring(0, i) + word.substring(i + 1, word.length());
+                permutations(perm + word.charAt(i), remaining, permutationConsumer);
+            }
+        }
+    }
+
     /**
      * Generates a list of possible permutations for the given list.
      *
-     * @param <E> Type of the element.
+     * @param <E>    Type of the element.
      * @param source Source list
      * @return Permutations.
      */
@@ -49,9 +65,9 @@ public class Permutations {
     /**
      * Generates a next set of permutations for previous permutation and places it in common result.
      *
-     * @param <E> Type.
-     * @param element Element to insert.
-     * @param previous Permutation from the previous state.
+     * @param <E>          Type.
+     * @param element      Element to insert.
+     * @param previous     Permutation from the previous state.
      * @param permutations Common result.
      */
     static <E> void permutations(E element, List<E> previous, LinkedList<List<E>> permutations) {
@@ -63,9 +79,9 @@ public class Permutations {
     /**
      * Copies source into the new array list and inserts given element at given index.
      *
-     * @param <E> Type.
-     * @param source Source list
-     * @param index Index of the element to insert. Ignored if incorrect.
+     * @param <E>     Type.
+     * @param source  Source list
+     * @param index   Index of the element to insert. Ignored if incorrect.
      * @param element Element to insert.
      * @return Copied source as an array list with element inserted.
      */
