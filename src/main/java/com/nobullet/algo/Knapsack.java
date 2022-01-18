@@ -130,8 +130,8 @@ public final class Knapsack {
       for (int currentCapacity = 1; currentCapacity < capacity + 1; currentCapacity++) {
         int profitIfTaken = 0;
         if (weights[itemIndex] <= currentCapacity) {
-          profitIfTaken = profits[itemIndex] +
-              dp[itemIndex][currentCapacity - weights[itemIndex]]; //
+          profitIfTaken = profits[itemIndex] + // current profit plus
+              dp[itemIndex][currentCapacity - weights[itemIndex]]; // profit without current weight
         }
         int profitIfNotTaken = dp[itemIndex - 1][currentCapacity];
         dp[itemIndex][currentCapacity] = Math.max(profitIfTaken, profitIfNotTaken);
