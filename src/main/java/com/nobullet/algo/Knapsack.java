@@ -17,63 +17,79 @@ import java.util.Set;
  */
 public final class Knapsack {
 
-  public int calls = 0;
-  private int unboundedCalls;
-  private int cacheHits;
-
   public Knapsack() {
   }
 
   // All complexity: O(2^n) as decision tree has height of n (with each element on the level to take or not):
   // 1 + 2 + 4 + ... + 2^(n) => 2^(n+1) - 1
   // The space complexity is O(n) (recursive calls are depth first with max number of stacks == n).
-  public int bruteForce(int capacity, int[] weights, int[] profits) {
-    return bruteForce(capacity, weights, profits, 0);
+  public int zeroOneBruteForce(int capacity, int[] weights, int[] profits) {
+    return zeroOneBruteForce(capacity, weights, profits, 0);
   }
 
-  private int bruteForce(int capacity, int[] weights, int[] profits, int currentIndex) {
+  private int zeroOneBruteForce(int capacity, int[] weights, int[] profits, int currentIndex) {
     if (currentIndex >= weights.length || capacity <= 0) {
       return 0;
     }
-    calls++;
     int profitIfTake = 0;
     if (weights[currentIndex] <= capacity) {
       profitIfTake =
           profits[currentIndex] +
-              bruteForce(capacity - weights[currentIndex], weights, profits, currentIndex + 1);
+              zeroOneBruteForce(capacity - weights[currentIndex], weights, profits, currentIndex + 1);
     }
-    int profitIfSkip = bruteForce(capacity, weights, profits, currentIndex + 1);
+    int profitIfSkip = zeroOneBruteForce(capacity, weights, profits, currentIndex + 1);
     return Math.max(profitIfSkip, profitIfTake);
   }
 
   // All complexity: O(n * C) because there will be no more problems than n * C.
   // The space complexity is O(n * C) - cache size.
-  public int bruteForceWMemoization(int capacity, int[] weights, int[] profits) {
+  public int zeroOneBruteForceWMemoization(int capacity, int[] weights, int[] profits) {
     Integer[][] cache = new Integer[profits.length][capacity + 1];
-    return bruteForceWMemoization(cache, capacity, weights, profits, 0);
+    return zeroOneBruteForceWMemoization(cache, capacity, weights, profits, 0);
   }
 
-  private int bruteForceWMemoization(Integer[][] cache, int capacity, int[] weights, int[] profits, int currentIndex) {
+  private int zeroOneBruteForceWMemoization(Integer[][] cache, int capacity, int[] weights, int[] profits, int currentIndex) {
     if (currentIndex >= weights.length || capacity <= 0) {
       return 0;
     }
     if (cache[currentIndex][capacity] != null) {
       return cache[currentIndex][capacity];
     }
-    calls++;
     int profitIfTake = 0;
     if (weights[currentIndex] <= capacity) {
       profitIfTake =
           profits[currentIndex] +
-              bruteForceWMemoization(cache, capacity - weights[currentIndex], weights, profits, currentIndex + 1);
+              zeroOneBruteForceWMemoization(cache, capacity - weights[currentIndex], weights, profits, currentIndex + 1);
     }
-    int profitIfSkip = bruteForceWMemoization(cache, capacity, weights, profits, currentIndex + 1);
+    int profitIfSkip = zeroOneBruteForceWMemoization(cache, capacity, weights, profits, currentIndex + 1);
     return (cache[currentIndex][capacity] = Math.max(profitIfSkip, profitIfTake));
   }
 
+  public int zeroOneWMatrix(int capacity, int[] weights, int[] profits) {
+    int[][] dp = new int[weights.length][capacity + 1];
+    // Fill 0 capacity column.
+    for (int itemIndex = 0; itemIndex < weights.length; itemIndex++) {
+      dp[itemIndex][0] = 0; // Profit for capacity 0 is 0.
+    }
+    // Fill 1st (0) item row.
+    for (int currentCapacity = 1; currentCapacity < capacity + 1; currentCapacity++) {
+      dp[0][currentCapacity] = weights[0] == currentCapacity ? profits[0] : 0;
+    }
+    for (int itemIndex = 1; itemIndex < weights.length; itemIndex++) {
+      for (int currentCapacity = 1; currentCapacity < capacity + 1; currentCapacity++) {
+        int profitIfTaken = 0;
+        if (weights[itemIndex] <= currentCapacity) {
+          profitIfTaken = profits[itemIndex] + // current profit plus
+              dp[itemIndex - 1][currentCapacity - weights[itemIndex]]; // profit without current weight
+        }
+        int profitIfNotTaken = dp[itemIndex - 1][currentCapacity];
+        dp[itemIndex][currentCapacity] = Math.max(profitIfTaken, profitIfNotTaken);
+      }
+    }
+    return dp[weights.length - 1][capacity];
+  }
+
   public int unboundedRecursive(int capacity, int[] weights, int[] profits) {
-    this.unboundedCalls = 0;
-    this.cacheHits = 0;
     Map<String, Integer> cache = new HashMap<>();
     int result = unboundedRecursive(capacity, weights, profits, 0, cache);
     // cache.size()
@@ -87,15 +103,12 @@ public final class Knapsack {
   private int unboundedRecursive(int capacity, int[] weights, int[] profits,
                                  int currentItemIndex,
                                  Map<String, Integer> cache) {
-    this.unboundedCalls++;
     if (capacity <= 0 || currentItemIndex >= weights.length) {
-      this.cacheHits++;
       return 0;
     }
     String key = capacity + "_" + currentItemIndex;
     Integer cached = cache.get(key);
     if (cached != null) {
-      this.cacheHits++;
       return cached;
     }
     int profitIfTaken = 0;

@@ -181,25 +181,18 @@ public class KnapsackTest {
 
 
   @Test
-  public void testBruteForce() {
-    Knapsack k1 = new Knapsack();
-    Knapsack k2 = new Knapsack();
+  public void testZeroOne_BruteForce() {
+    Knapsack k = new Knapsack();
     int[] profits = {1, 6, 10, 16};
     int[] weights = {1, 2, 3, 5};
-    assertEquals(22, k1.bruteForce(7, weights, profits));
-    assertEquals(17, k2.bruteForce(6, weights, profits));
+    assertEquals(22, k.zeroOneBruteForce(7, weights, profits));
+    assertEquals(17, k.zeroOneBruteForce(6, weights, profits));
 
-    //System.out.println(k1.calls + " / " + k2.calls);
-  }
+    assertEquals(22, k.zeroOneBruteForceWMemoization(7, weights, profits));
+    assertEquals(17, k.zeroOneBruteForceWMemoization(6, weights, profits));
 
-  @Test
-  public void testBruteForce_wMemoization() {
-    Knapsack k1 = new Knapsack();
-    Knapsack k2 = new Knapsack();
-    int[] profits = {1, 6, 10, 16};
-    int[] weights = {1, 2, 3, 5};
-    assertEquals(22, k1.bruteForceWMemoization(7, weights, profits));
-    assertEquals(17, k2.bruteForceWMemoization(6, weights, profits));
+    assertEquals(22, k.zeroOneWMatrix(7, weights, profits));
+    assertEquals(17, k.zeroOneWMatrix(6, weights, profits));
   }
 
   @Test
