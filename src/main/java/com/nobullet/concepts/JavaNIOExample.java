@@ -27,7 +27,7 @@ public class JavaNIOExample {
     static final Logger logger = Logger.getLogger(JavaNIOExample.class.getName());
     static final Charset UTF8 = Charset.forName("UTF-8");
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void maijjjn(String[] args) throws IOException, InterruptedException {
         SocketChannel channel = SocketChannel.open();
 
         // we open this channel in non blocking mode
@@ -40,7 +40,7 @@ public class JavaNIOExample {
         }
         while (true) {
             // see if any message has been received
-            ByteBuffer bufferA = ByteBuffer.allocate(20);
+            ByteBuffer bufferA = ByteBuffer.allocate(1024);
 
             CharBuffer buffer = CharBuffer.wrap("GET /");
             while (buffer.hasRemaining()) {
@@ -61,11 +61,12 @@ public class JavaNIOExample {
         }
     }
 
-    public static void main2(String... args) throws IOException {
+    public static void main(String... args) throws IOException {
         // Getting address is blocking.
         SocketAddress address = new InetSocketAddress(InetAddress.getByName(HOST), PORT);
 
         Selector selector = Selector.open();
+        selector.wakeup();
 
         SocketChannel socketChannel = SocketChannel.open();
         socketChannel.configureBlocking(false);
